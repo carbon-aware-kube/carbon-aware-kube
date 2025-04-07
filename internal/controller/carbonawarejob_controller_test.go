@@ -25,6 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	batchv1alpha1 "carbon-aware-kube.dev/carbon-aware-kube/api/v1alpha1"
@@ -37,11 +39,40 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 
 		ctx := context.Background()
 
+		var (
+			flexWindow       = int32(10)
+			expectedDuration = int32(30)
+			jobTemplate      = batchv1.JobTemplateSpec{
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:  "test-container",
+									Image: "busybox",
+								},
+							},
+						},
+					},
+				},
+			}
+		)
+
 		typeNamespacedName := types.NamespacedName{
 			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+			Namespace: "default",
 		}
-		carbonawarejob := &carbonv1alpha1.CarbonAwareJob{}
+		carbonawarejob := &carbonv1alpha1.CarbonAwareJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      resourceName,
+				Namespace: "default",
+			},
+			Spec: carbonv1alpha1.CarbonAwareJobSpec{
+				JobTemplate:             jobTemplate,
+				StartFlexWindowSeconds:  &flexWindow,
+				ExpectedDurationSeconds: &expectedDuration,
+			},
+		}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind CarbonAwareJob")
@@ -52,9 +83,14 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: carbonv1alpha1.CarbonAwareJobSpec{
+						JobTemplate:             jobTemplate,
+						StartFlexWindowSeconds:  &flexWindow,
+						ExpectedDurationSeconds: &expectedDuration,
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+				Expect(k8sClient.Get(ctx, typeNamespacedName, carbonawarejob)).To(Succeed())
 			}
 		})
 

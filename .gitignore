@@ -11,9 +11,6 @@
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
@@ -23,3 +20,35 @@ go.work.sum
 
 # env file
 .env
+
+## Kube builder
+.idea/
+.vscode/
+WORKSPACE
+.DS_Store
+# don't check in the build output of the book
+docs/book/book/
+
+# ignore auto-generated dir by `mdbook serve`
+docs/book/src/docs
+
+# Editor temp files
+*~
+\#*#
+*.swp
+
+# Skip bazel dirs
+/bazel-*
+
+# skip bin dirs
+**/bin
+**/testbin
+
+# skip .out files (coverage tests)
+*.out
+
+# skip testdata go.sum, since it may have
+# different result depending on go version
+/testdata/**/go.sum
+/docs/book/src/simple-external-plugin-tutorial/testdata/sampleexternalplugin/v1/bin
+/testdata/**legacy**
