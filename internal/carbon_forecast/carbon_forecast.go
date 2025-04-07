@@ -4,10 +4,15 @@ import (
 	"time"
 )
 
-func EvaluateCarbonForecast(windowStart time.Time, windowEnd time.Time, windowDuration time.Duration) (time.Time, error) {
-	// Find the midpoint of the start and end times
-	midpointDelta := windowEnd.Sub(windowStart) + (windowDuration / 2)
+type ForecastProvider interface {
+	Evaluate(windowStart time.Time, windowEnd time.Time, taskDuration time.Duration) (time.Time, error)
+}
 
-	// Return the midpoint
-	return windowStart.Add(midpointDelta), nil
+type ForecastData struct {
+	Data []ForecastDataPoint
+}
+
+type ForecastDataPoint struct {
+	PointInTime     time.Time
+	CarbonIntensity float64
 }
