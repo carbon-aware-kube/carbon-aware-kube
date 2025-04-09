@@ -5,11 +5,23 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 )
 
-func NewMockWattimeServer(mockApiKey string, mockPeriodSeconds int, mockForecastBuilder func(horizonHours int, periodSeconds int) WattTimeForecast) *httptest.Server {
-	return httptest.NewServer(
+type MockWattimeServer struct {
+	server            *httptest.Server
+	mockApiKey        string
+	mockPeriodSeconds int
+	mockForecast      *WattTimeForecast
+}
+
+func NewMockWattimeServer(mockApiKey string, mockPeriodSeconds int, mockForecast *WattTimeForecast) *MockWattimeServer {
+	s := &MockWattimeServer{
+		mockApiKey:        mockApiKey,
+		mockPeriodSeconds: mockPeriodSeconds,
+		mockForecast:      mockForecast,
+	}
+
+	s.server = httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path != WattTimeApiPath {
 				log.Printf("request path check failed: %s", r.URL.Path)
@@ -30,13 +42,25 @@ func NewMockWattimeServer(mockApiKey string, mockPeriodSeconds int, mockForecast
 				return
 			}
 
-			horizonHoursInt, _ := strconv.Atoi(horizonHours)
-			mockForecast := mockForecastBuilder(horizonHoursInt, mockPeriodSeconds)
-			mockForecastJson, _ := json.Marshal(mockForecast)
+			mockForecastJson, _ := json.Marshal(s.mockForecast)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			w.Write(mockForecastJson)
 		}),
 	)
+
+	return s
+}
+
+func (s *MockWattimeServer) Close() {
+	s.server.Close()
+}
+
+func (s *MockWattimeServer) URL() string {
+	return s.server.URL
+}
+
+func (s *MockWattimeServer) SetForecast(mockForecast *WattTimeForecast) {
+	s.mockForecast = mockForecast
 }

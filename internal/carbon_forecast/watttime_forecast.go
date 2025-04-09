@@ -1,8 +1,6 @@
 package carbon_forecast
 
 import (
-	"fmt"
-	"log"
 	"math"
 	"time"
 )
@@ -47,16 +45,19 @@ func (fp *WattimeForecastProvider) Evaluate(windowStart time.Time, windowEnd tim
 	return windowStart.Add(time.Duration(minIndex) * forecastPeriod), nil
 }
 
-func rollupForecast(forecastData *[]WattTimeForecastData, forecastPeriod time.Duration, taskDuration time.Duration) ([]float64, error) {
-	if forecastPeriod > taskDuration {
-		return nil, fmt.Errorf("forecast period is longer than the task duration")
+// Sanitizes the forecast by rounding the time to the nearest second
+func SanitizeForecast(forecast *WattTimeForecast) *WattTimeForecast {
+	for i := range forecast.Data {
+		forecast.Data[i].PointInTime = forecast.Data[i].PointInTime.Round(0)
 	}
+	return forecast
+}
 
+func rollupForecast(forecastData *[]WattTimeForecastData, forecastPeriod time.Duration, taskDuration time.Duration) ([]float64, error) {
 	windowSize := float64(taskDuration) / float64(forecastPeriod)
 	windowSizeInt := int(math.Ceil(windowSize))
 	// TODO: do I want to normalize this into a set time period -- so instead of being based on the forecastPeriod, normalize to a set time period (e.g. 1 hour)
 	normalizationFactor := 1 / windowSize
-	log.Printf("windowSize: %f, windowSizeInt: %d, normalizationFactor: %f", windowSize, windowSizeInt, normalizationFactor)
 
 	rollupForecast := make([]float64, len(*forecastData)-windowSizeInt+1)
 	for i := range len(rollupForecast) {
@@ -64,7 +65,6 @@ func rollupForecast(forecastData *[]WattTimeForecastData, forecastPeriod time.Du
 		for j := range windowSizeInt {
 			sum += (*forecastData)[i+j].CarbonIntensity
 		}
-		log.Printf("sum for i: %d, sum: %f, end: %d", i, sum, i+windowSizeInt)
 		rollupForecast[i] = sum * normalizationFactor
 	}
 

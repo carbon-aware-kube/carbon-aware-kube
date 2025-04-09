@@ -1,7 +1,6 @@
 package carbon_forecast
 
 import (
-	"net/http/httptest"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -40,12 +39,13 @@ var _ = Describe("WattTimeClient", func() {
 	Describe("GetCarbonForecast", func() {
 		var (
 			serverUrl    string
-			server       *httptest.Server
+			server       *MockWattimeServer
 			mockForecast WattTimeForecast
 		)
 		BeforeEach(func() {
-			server = NewMockWattimeServer(mockApiKey, mockPeriodSeconds, getWattimeClientMockForecast)
-			serverUrl = server.URL
+			mockForecast = getWattimeClientMockForecast(4, mockPeriodSeconds)
+			server = NewMockWattimeServer(mockApiKey, mockPeriodSeconds, &mockForecast)
+			serverUrl = server.URL()
 		})
 
 		AfterEach(func() {
