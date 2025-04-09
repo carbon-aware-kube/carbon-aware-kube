@@ -17,64 +17,250 @@ func buildMockWattTimeForecast(
 	}
 }
 
+var _ = Describe("rollupForecast", func() {
+	Context("when the forecast period is equal to the task duration", func() {
+		var (
+			mockWattimeForecast = buildMockWattTimeForecast(
+				[]WattTimeForecastData{
+					{PointInTime: time.Now(), CarbonIntensity: 1},
+					{PointInTime: time.Now().Add(time.Hour), CarbonIntensity: 2},
+					{PointInTime: time.Now().Add(2 * time.Hour), CarbonIntensity: 3},
+				},
+				int(time.Hour.Seconds()),
+			)
+		)
+		It("should return the correct rollup forecast (equivalent to the original forecast)", func() {
+			rollupForecast, err := rollupForecast(&mockWattimeForecast.Data, time.Hour, time.Hour)
+			Expect(err).To(BeNil())
+			Expect(rollupForecast).To(Equal([]float64{1, 2, 3}))
+		})
+	})
+	Context("when the forecast period is half the task duration", func() {
+		var (
+			fiveMinInSeconds    = time.Minute.Seconds() * 5
+			tenMinInSeconds     = 2 * fiveMinInSeconds
+			mockWattimeForecast = buildMockWattTimeForecast(
+				[]WattTimeForecastData{
+					{PointInTime: time.Now(), CarbonIntensity: 1},
+					{PointInTime: time.Now().Add(time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 2},
+					{PointInTime: time.Now().Add(2 * time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 3},
+					{PointInTime: time.Now().Add(3 * time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 4},
+				},
+				int(fiveMinInSeconds),
+			)
+		)
+		It("should average the carbon intensity between adjacent forecast periods", func() {
+			rollupForecast, err := rollupForecast(&mockWattimeForecast.Data, time.Duration(fiveMinInSeconds)*time.Second, time.Duration(tenMinInSeconds)*time.Second)
+			Expect(err).To(BeNil())
+			Expect(rollupForecast).To(Equal([]float64{1.5, 2.5, 3.5}))
+		})
+	})
+})
+
 var _ = Describe("WattimeForecastProvider", func() {
-	Describe("rollupForecast", func() {
-		Context("when the forecast period is equal to the task duration", func() {
-			var (
-				mockWattimeForecast = buildMockWattTimeForecast(
-					[]WattTimeForecastData{
-						{PointInTime: time.Now(), CarbonIntensity: 1},
-						{PointInTime: time.Now().Add(time.Hour), CarbonIntensity: 2},
-						{PointInTime: time.Now().Add(2 * time.Hour), CarbonIntensity: 3},
-					},
-					int(time.Hour.Seconds()),
-				)
-			)
-			It("should return the correct rollup forecast (equivalent to the original forecast)", func() {
-				rollupForecast, err := rollupForecast(&mockWattimeForecast.Data, time.Hour, time.Hour)
-				Expect(err).To(BeNil())
-				Expect(rollupForecast).To(Equal([]float64{1, 2, 3}))
+	Describe("Evaluate", func() {
+		var (
+			startTime               time.Time
+			mockWattimeServer       *MockWattimeServer
+			mockWattimeClient       *WattTimeClient
+			wattimeForecastProvider *WattimeForecastProvider
+		)
+
+		BeforeEach(func() {
+			startTime = time.Now().Add(time.Minute)
+			mockWattimeServer = NewMockWattimeServer(mockApiKey, mockPeriodSeconds, nil)
+			mockWattimeClient = NewWattTimeClient(mockApiKey, mockWattimeServer.URL())
+			wattimeForecastProvider = NewWattimeForecastProvider(mockWattimeClient)
+		})
+
+		AfterEach(func() {
+			mockWattimeServer.Close()
+		})
+
+		Context("with a flat forecast", func() {
+			Context("with a forecast period of 1 hour, horizon of 4 hours", func() {
+				BeforeEach(func() {
+					mockWattimeServer.SetForecast(&WattTimeForecast{
+						Data: []WattTimeForecastData{
+							{PointInTime: startTime, CarbonIntensity: 1},
+							{PointInTime: startTime.Add(time.Hour), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(2 * time.Hour), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(3 * time.Hour), CarbonIntensity: 1},
+						},
+						Metadata: WattTimeForecastMetadata{
+							Region:        "CAISO_NORTH",
+							PeriodSeconds: 3600,
+						},
+					})
+				})
+				Context("with a task duration of 1 hour", func() {
+					It("should return now as the start time", func() {
+						evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), time.Hour)
+						Expect(err).To(BeNil())
+						Expect(evaluatedStartTime).To(Equal(startTime))
+					})
+				})
+				Context("with a task duration of 2 hours", func() {
+					It("should return now as the start time", func() {
+						evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 2*time.Hour)
+						Expect(err).To(BeNil())
+						Expect(evaluatedStartTime).To(Equal(startTime))
+					})
+				})
+			})
+			Context("with a forecast period of 5 minutes, horizon of 30 minutes", func() {
+				BeforeEach(func() {
+					fiveMin := time.Minute * 5
+					mockWattimeServer.SetForecast(&WattTimeForecast{
+						Data: []WattTimeForecastData{
+							{PointInTime: startTime, CarbonIntensity: 1},
+							{PointInTime: startTime.Add(fiveMin), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(2 * fiveMin), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(3 * fiveMin), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(4 * fiveMin), CarbonIntensity: 1},
+							{PointInTime: startTime.Add(5 * fiveMin), CarbonIntensity: 1},
+						},
+						Metadata: WattTimeForecastMetadata{
+							Region:        "CAISO_NORTH",
+							PeriodSeconds: int(fiveMin.Seconds()),
+						},
+					})
+				})
+				Context("with a task duration of 10 minutes", func() {
+					tenMin := time.Minute * 10
+					It("should return now as the start time", func() {
+						evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(30*time.Minute), tenMin)
+						Expect(err).To(BeNil())
+						Expect(evaluatedStartTime).To(Equal(startTime))
+					})
+				})
+				Context("with a task duration of 10 minutes", func() {
+					tenMin := time.Minute * 10
+					It("should return now as the start time", func() {
+						evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(30*time.Minute), tenMin)
+						Expect(err).To(BeNil())
+						Expect(evaluatedStartTime).To(Equal(startTime))
+					})
+				})
 			})
 		})
-		Context("when the forecast period is half the task duration", func() {
-			var (
-				fiveMinInSeconds    = time.Minute.Seconds() * 5
-				tenMinInSeconds     = 2 * fiveMinInSeconds
-				mockWattimeForecast = buildMockWattTimeForecast(
-					[]WattTimeForecastData{
-						{PointInTime: time.Now(), CarbonIntensity: 1},
-						{PointInTime: time.Now().Add(time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 2},
-						{PointInTime: time.Now().Add(2 * time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 3},
-						{PointInTime: time.Now().Add(3 * time.Duration(fiveMinInSeconds) * time.Second), CarbonIntensity: 4},
+		Context("with a forecast that starts high (100) then goes lower (50) then goes higher (100)", func() {
+			BeforeEach(func() {
+				mockWattimeServer.SetForecast(&WattTimeForecast{
+					Data: []WattTimeForecastData{
+						{PointInTime: startTime, CarbonIntensity: 100},
+						{PointInTime: startTime.Add(time.Hour), CarbonIntensity: 50},
+						{PointInTime: startTime.Add(2 * time.Hour), CarbonIntensity: 100},
+						{PointInTime: startTime.Add(3 * time.Hour), CarbonIntensity: 100},
 					},
-					int(fiveMinInSeconds),
-				)
-			)
-			It("should average the carbon intensity between adjacent forecast periods", func() {
-				rollupForecast, err := rollupForecast(&mockWattimeForecast.Data, time.Duration(fiveMinInSeconds)*time.Second, time.Duration(tenMinInSeconds)*time.Second)
-				Expect(err).To(BeNil())
-				Expect(rollupForecast).To(Equal([]float64{1.5, 2.5, 3.5}))
+					Metadata: WattTimeForecastMetadata{
+						Region:        "CAISO_NORTH",
+						PeriodSeconds: 3600,
+					},
+				})
+			})
+			Context("with a task duration of 1 hour (same as forecast period)", func() {
+				It("should return the point in time that the carbon intensity is lowest", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(time.Hour)))
+				})
+			})
+			Context("with a task duration of 2 hours (twice the forecast period)", func() {
+				It("should return now as the start time (earliest possible start time with the lowest carbon intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 2*time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime))
+				})
 			})
 		})
-		Context("when the forecast period is longer than the task duration", func() {
-			var (
-				fiveMinInSeconds    = time.Minute.Seconds() * 5
-				tenMinInSeconds     = 2 * fiveMinInSeconds
-				mockWattimeForecast = buildMockWattTimeForecast(
-					[]WattTimeForecastData{
-						{PointInTime: time.Now(), CarbonIntensity: 1},
-						{PointInTime: time.Now().Add(time.Duration(tenMinInSeconds) * time.Second), CarbonIntensity: 2},
-						{PointInTime: time.Now().Add(2 * time.Duration(tenMinInSeconds) * time.Second), CarbonIntensity: 3},
-						{PointInTime: time.Now().Add(3 * time.Duration(tenMinInSeconds) * time.Second), CarbonIntensity: 4},
+		Context("with a forecast that goes [100, 50, 10, 0]", func() {
+			BeforeEach(func() {
+				mockWattimeServer.SetForecast(&WattTimeForecast{
+					Data: []WattTimeForecastData{
+						{PointInTime: startTime, CarbonIntensity: 100},
+						{PointInTime: startTime.Add(time.Hour), CarbonIntensity: 50},
+						{PointInTime: startTime.Add(2 * time.Hour), CarbonIntensity: 10},
+						{PointInTime: startTime.Add(3 * time.Hour), CarbonIntensity: 0},
 					},
-					int(fiveMinInSeconds),
-				)
-			)
-			It("should error", func() {
-				rollupForecast, err := rollupForecast(&mockWattimeForecast.Data, time.Duration(tenMinInSeconds)*time.Second, time.Duration(fiveMinInSeconds)*time.Second)
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError("forecast period is longer than the task duration"))
-				Expect(rollupForecast).To(BeNil())
+					Metadata: WattTimeForecastMetadata{
+						Region:        "CAISO_NORTH",
+						PeriodSeconds: 3600,
+					},
+				})
+			})
+			Context("with a task duration of 3 hours", func() {
+				It("should return the second point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 3*time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(time.Hour)))
+				})
+			})
+			Context("with a task duration of 2 hours", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 2*time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(2 * time.Hour)))
+				})
+			})
+			Context("with a task duration of 1 hour", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(3 * time.Hour)))
+				})
+			})
+			Context("with a task duration of 30 minutes", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 30*time.Minute)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(3 * time.Hour)))
+				})
+			})
+		})
+		Context("with a forecast that goes [100, 50, 10, 0, 20]", func() {
+			BeforeEach(func() {
+				mockWattimeServer.SetForecast(&WattTimeForecast{
+					Data: []WattTimeForecastData{
+						{PointInTime: startTime, CarbonIntensity: 100},
+						{PointInTime: startTime.Add(time.Hour), CarbonIntensity: 50},
+						{PointInTime: startTime.Add(2 * time.Hour), CarbonIntensity: 10},
+						{PointInTime: startTime.Add(3 * time.Hour), CarbonIntensity: 0},
+						{PointInTime: startTime.Add(4 * time.Hour), CarbonIntensity: 20},
+					},
+					Metadata: WattTimeForecastMetadata{
+						Region:        "CAISO_NORTH",
+						PeriodSeconds: 3600,
+					},
+				})
+			})
+			Context("with a task duration of 3 hours", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 3*time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(2 * time.Hour)))
+				})
+			})
+			Context("with a task duration of 2 hours", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 2*time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(2 * time.Hour)))
+				})
+			})
+			Context("with a task duration of 1 hour", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), time.Hour)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(3 * time.Hour)))
+				})
+			})
+			Context("with a task duration of 30 minutes", func() {
+				It("should return the third point in time (inclusive of the section with the lowest intensity)", func() {
+					evaluatedStartTime, err := wattimeForecastProvider.Evaluate(startTime, startTime.Add(4*time.Hour), 30*time.Minute)
+					Expect(err).To(BeNil())
+					Expect(evaluatedStartTime).To(Equal(startTime.Add(3 * time.Hour)))
+				})
 			})
 		})
 	})
