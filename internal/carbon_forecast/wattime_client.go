@@ -25,6 +25,23 @@ type WattTimeForecastData struct {
 	CarbonIntensity float64   `json:"value"`
 }
 
+// ToForecastDataPoint converts a WattTimeForecastData to a ForecastDataPoint
+func (w WattTimeForecastData) ToForecastDataPoint() ForecastDataPoint {
+	return ForecastDataPoint{
+		PointInTime:     w.PointInTime,
+		CarbonIntensity: w.CarbonIntensity,
+	}
+}
+
+// ToForecastDataPoints converts a slice of WattTimeForecastData to a slice of ForecastDataPoint
+func ToForecastDataPoints(wattTimeForecastData []WattTimeForecastData) []ForecastDataPoint {
+	forecastData := make([]ForecastDataPoint, len(wattTimeForecastData))
+	for i, data := range wattTimeForecastData {
+		forecastData[i] = data.ToForecastDataPoint()
+	}
+	return forecastData
+}
+
 type WattTimeForecastMetadata struct {
 	Region        string `json:"region"`
 	PeriodSeconds int    `json:"data_point_period_seconds"`
