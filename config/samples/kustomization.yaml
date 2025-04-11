@@ -1,4 +1,0 @@
-## Append samples of your project ##
-resources:
-- batch_v1alpha1_carbonawarejob.yaml
-# +kubebuilder:scaffold:manifestskustomizesamples
