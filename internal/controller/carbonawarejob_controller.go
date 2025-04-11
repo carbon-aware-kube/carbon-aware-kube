@@ -34,7 +34,8 @@ import (
 // CarbonAwareJobReconciler reconciles a CarbonAwareJob object
 type CarbonAwareJobReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme           *runtime.Scheme
+	forecastProvider carbonforecast.ForecastProvider
 }
 
 // +kubebuilder:rbac:groups=batch.carbon-aware-kube.dev,resources=carbonawarejobs,verbs=get;list;watch;create;update;patch;delete
@@ -67,7 +68,11 @@ func (r *CarbonAwareJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if caj.Status.ScheduledStartTime == nil {
 		expectedDuration := time.Duration(*caj.Spec.ExpectedDurationSeconds) * time.Second
 
-		scheduledTime, err := carbonforecast.EvaluateCarbonForecast(creationTime, deadline, expectedDuration)
+		scheduledTime, err := r.forecastProvider.Evaluate(
+			creationTime,
+			deadline,
+			expectedDuration,
+		)
 		if err != nil {
 			log.Error(err, "Failed to evaluate carbon forecast, requeueing")
 			return ctrl.Result{Requeue: true, RequeueAfter: 30 * time.Second}, err
