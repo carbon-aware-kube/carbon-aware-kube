@@ -1,9 +1,0 @@
-apiVersion: batch.carbon-aware-kube.dev/v1alpha1
-kind: CarbonAwareJob
-metadata:
-  labels:
-    app.kubernetes.io/name: carbon-aware-kube
-    app.kubernetes.io/managed-by: kustomize
-  name: carbonawarejob-sample
-spec:
-  # TODO(user): Add fields here
