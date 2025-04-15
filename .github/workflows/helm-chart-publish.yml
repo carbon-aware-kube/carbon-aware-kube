@@ -13,6 +13,7 @@ on:
 env:
   REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY_URL }}
   CHART_PATH: ./charts/carbon-aware-scheduler
+  CHART_NAME: scheduler/chart
 
 jobs:
   package-and-push:
@@ -33,6 +34,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          token_format: 'access_token'
 
       # Install Helm
       - name: Set up Helm
@@ -47,7 +49,7 @@ jobs:
       # Configure Docker for Artifact Registry (needed for Helm OCI)
       - name: Set up GCP Docker auth
         run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }}
+          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
 
       # Update chart version if this is a release
       - name: Update Chart version for release
@@ -94,6 +96,6 @@ jobs:
           echo "Pushing chart with tag: ${TAG}"
           
           # Push the chart to Artifact Registry using Helm OCI support
-          helm push ${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz oci://${{ env.REGISTRY }}/charts
+          helm push ${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz oci://${{ env.REGISTRY }}/${{ env.CHART_NAME }}
           
           echo "Successfully pushed Helm chart to Artifact Registry"
