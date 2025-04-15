@@ -47,11 +47,6 @@ jobs:
           username: 'oauth2accesstoken'
           password: '${{ steps.auth.outputs.access_token }}'
 
-      # Configure Docker to use the gcloud command-line tool as a credential helper
-      - name: Set up GCP Docker auth
-        run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
-
       # Extract metadata for Docker
       - name: Extract Docker metadata
         id: meta

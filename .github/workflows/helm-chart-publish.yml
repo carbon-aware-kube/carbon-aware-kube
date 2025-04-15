@@ -46,10 +46,11 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
 
-      # Configure Docker for Artifact Registry (needed for Helm OCI)
-      - name: Set up GCP Docker auth
+      - name: Login to Helm
         run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+          helm registry login ${{ env.REGISTRY }} \
+            --username oauth2accesstoken \
+            --password ${{ steps.auth.outputs.access_token }}
 
       # Update chart version if this is a release
       - name: Update Chart version for release
