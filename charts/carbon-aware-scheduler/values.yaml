@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: carbon-aware-scheduler
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# WattTime API credentials
+watttime:
+  # Set to true to use existing secrets instead of creating new ones
+  existingSecret:
+    enabled: false
+    name: ""
+  # Set credentials directly (will be stored in a Secret)
+  credentials:
+    username: ""
+    password: ""
+
+# Pod-specific configurations
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,71 @@
+name: Build and Push Docker Image
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main, master]
+    paths:
+      - 'web/**'
+      - '.github/workflows/docker-build-push.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY_URL }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REPOSITORY: carbon-aware-kube
+  IMAGE_NAME: carbon-aware-scheduler
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Needed for GCP authentication
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Google Cloud authentication
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Configure Docker to use the gcloud command-line tool as a credential helper
+      - name: Set up GCP Docker auth
+        run: |
+          gcloud auth configure-docker ${{ env.REGISTRY }}
+
+      # Extract metadata for Docker
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+            type=raw,value=dev,enable=${{ github.event_name == 'push' }}
+            type=sha,format=short,enable=${{ github.event_name == 'push' }}
+
+      # Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
