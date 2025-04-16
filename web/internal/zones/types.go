@@ -6,6 +6,9 @@ type PowerZone string
 
 const (
 	CAISO_NORTH PowerZone = "CAISO_NORTH"
+	PJM_DC      PowerZone = "PJM_DC"
+	DE          PowerZone = "DE"
+	NEM_NSW     PowerZone = "NEM_NSW"
 )
 
 // CloudProvider represents a cloud service provider identifier.
@@ -28,7 +31,10 @@ type CloudRegion struct {
 // The key is the string identifier users will provide (e.g., "gcp:us-west2").
 // Using a map allows quick validation of user input.
 var AllowedCloudRegions = map[string]CloudRegion{
-	"gcp:us-west2": {Provider: GCP, Name: "us-west2"},
+	"gcp:us-west2":             {Provider: GCP, Name: "us-west2"},
+	"gcp:us-east4":             {Provider: GCP, Name: "us-east4"},
+	"gcp:europe-west3":         {Provider: GCP, Name: "europe-west3"},
+	"gcp:australia-southeast1": {Provider: GCP, Name: "australia-southeast1"},
 	// Add more supported regions here as needed
 }
 

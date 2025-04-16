@@ -109,6 +109,91 @@ var _ = Describe("Schedule API Endpoint E2E", func() {
 			Expect(respBody.Options[2].Time).To(Equal(startTime)) // Gomega assertion
 			Expect(respBody.Options[2].CO2Intensity).To(Equal(100.0)) // Gomega assertion
 		})
+
+		It("should include carbon savings data in the response", func() {
+			// Setup a forecast with a clear pattern for testing carbon savings
+			startTime := time.Now().UTC().Truncate(5 * time.Minute)
+			mockWtClient.ForecastResponse = &watttime.ForecastResponse{
+				Meta: watttime.ForecastMeta{
+					Region:                 testRegionAbbrev,
+					SignalType:             "co2_moer",
+					DataPointPeriodSeconds: 300, // 5 minutes
+					GeneratedAt:            startTime.Add(-time.Hour),
+				},
+				Data: []watttime.ForecastDataPoint{
+					{PointTime: startTime, Value: 500}, // Naive case (start of window)
+					{PointTime: startTime.Add(5 * time.Minute), Value: 400}, // Ideal case (lowest)
+					{PointTime: startTime.Add(10 * time.Minute), Value: 600},
+					{PointTime: startTime.Add(15 * time.Minute), Value: 650},
+					{PointTime: startTime.Add(20 * time.Minute), Value: 700}, // Median case
+					{PointTime: startTime.Add(25 * time.Minute), Value: 750},
+					{PointTime: startTime.Add(30 * time.Minute), Value: 800}, // Worst case
+				},
+			}
+
+			// Prepare request
+			numOptions := 3
+			reqBody := sharedtypes.ScheduleRequest{
+				Windows: []sharedtypes.TimeRange{
+					{Start: startTime, End: startTime.Add(35 * time.Minute)},
+				},
+				Duration:   "5m",
+				Zones:      []string{"TestZone"},
+				NumOptions: &numOptions,
+			}
+			bodyBytes, err := json.Marshal(reqBody)
+			Expect(err).NotTo(HaveOccurred())
+
+			req, err := http.NewRequestWithContext(context.Background(), "POST", "/api/schedule", bytes.NewReader(bodyBytes))
+			Expect(err).NotTo(HaveOccurred())
+			req.Header.Set("Content-Type", "application/json")
+
+			// Execute request
+			rr := httptest.NewRecorder()
+			router.ServeHTTP(rr, req)
+
+			// Assert response
+			Expect(rr.Code).To(Equal(http.StatusOK))
+
+			var respBody sharedtypes.ScheduleResponse
+			err = json.Unmarshal(rr.Body.Bytes(), &respBody)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Verify all the new fields are present
+			Expect(respBody.Ideal).NotTo(BeNil())
+			Expect(respBody.WorstCase).NotTo(BeNil())
+			Expect(respBody.NaiveCase).NotTo(BeNil())
+			Expect(respBody.MedianCase).NotTo(BeNil())
+
+			// Verify the ideal case is the lowest carbon intensity
+			Expect(respBody.Ideal.Time).To(Equal(startTime.Add(5 * time.Minute)))
+			Expect(respBody.Ideal.CO2Intensity).To(Equal(400.0))
+
+			// Verify worst case has highest carbon intensity
+			Expect(respBody.WorstCase.CO2Intensity).To(BeNumerically(">", respBody.Ideal.CO2Intensity))
+
+			// Verify naive case is at the start of the window
+			Expect(respBody.NaiveCase.Time).To(Equal(startTime))
+
+			// Verify carbon savings are calculated correctly
+			Expect(respBody.CarbonSavings.VsWorstCase).To(BeNumerically(">", 0))
+			Expect(respBody.CarbonSavings.VsMedianCase).To(BeNumerically(">", 0))
+
+			// If naive case is not the same as ideal, savings should be positive
+			if !respBody.NaiveCase.Time.Equal(respBody.Ideal.Time) {
+				Expect(respBody.CarbonSavings.VsNaiveCase).To(BeNumerically(">", 0))
+			}
+
+			// Log the actual values for debugging
+			GinkgoWriter.Printf("Ideal: %v, CO2: %.2f\n", respBody.Ideal.Time, respBody.Ideal.CO2Intensity)
+			GinkgoWriter.Printf("Worst: %v, CO2: %.2f\n", respBody.WorstCase.Time, respBody.WorstCase.CO2Intensity)
+			GinkgoWriter.Printf("Naive: %v, CO2: %.2f\n", respBody.NaiveCase.Time, respBody.NaiveCase.CO2Intensity)
+			GinkgoWriter.Printf("Median: %v, CO2: %.2f\n", respBody.MedianCase.Time, respBody.MedianCase.CO2Intensity)
+			GinkgoWriter.Printf("Carbon Savings - vs Worst: %.2f%%, vs Naive: %.2f%%, vs Median: %.2f%%\n", 
+				respBody.CarbonSavings.VsWorstCase, 
+				respBody.CarbonSavings.VsNaiveCase, 
+				respBody.CarbonSavings.VsMedianCase)
+		})
 	})
 
 	Context("when receiving an invalid request body", func() {

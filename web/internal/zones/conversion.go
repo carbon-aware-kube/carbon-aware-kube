@@ -2,11 +2,11 @@ package zones
 
 // cloudRegionToPowerZoneMap defines the mapping from a specific cloud region
 // to its corresponding power grid zone identifier.
-// --- IMPORTANT: Populate this map with the correct PowerZone for each CloudRegion ---
-// You'll need to determine the correct power grid zone for each cloud region you support.
-// The PowerZone values are examples and likely need correction based on actual grid data.
 var cloudRegionToPowerZoneMap = map[CloudRegion]PowerZone{
-	{Provider: GCP, Name: "us-west2"}: CAISO_NORTH, // Example mapping
+	{Provider: GCP, Name: "us-west2"}:             CAISO_NORTH,
+	{Provider: GCP, Name: "us-east4"}:             PJM_DC,
+	{Provider: GCP, Name: "europe-west3"}:         DE,
+	{Provider: GCP, Name: "australia-southeast1"}: NEM_NSW,
 }
 
 // CloudRegionToPowerZone attempts to convert a CloudRegion struct to its corresponding PowerZone.
@@ -24,7 +24,7 @@ func CloudRegionToPowerZone(region CloudRegion) (PowerZone, bool) {
 func CloudRegionStringToPowerZone(identifier string) (PowerZone, bool) {
 	cloudRegion, ok := GetCloudRegionFromString(identifier)
 	if !ok {
-		return "", false // Input string is not a valid/allowed cloud region identifier
+		return PowerZone(""), false // Input string is not a valid/allowed cloud region identifier
 	}
 	return CloudRegionToPowerZone(cloudRegion)
 }

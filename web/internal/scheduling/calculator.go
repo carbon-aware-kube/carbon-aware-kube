@@ -167,10 +167,105 @@ func CalculateBestSchedule(
 		if len(options) == 0 {
 			return nil, fmt.Errorf("internal error: failed to build schedule options after finding valid windows")
 		}
+		// Find the worst case (highest carbon intensity)
+		worstResult := results[len(results)-1] // Since results are sorted by carbon intensity (ascending)
+		worstCaseOption := sharedtypes.ScheduleOption{
+			Time:         filtered[worstResult.start].PointTime,
+			Zone:         firstZoneString,
+			CO2Intensity: worstResult.avg,
+		}
+
+		// Calculate naive case (first valid time in the earliest window)
+		naiveCaseIdx := -1
+		for i, dp := range filtered {
+			// Find the first data point that is within any window and has enough following points
+			if (i + pointsNeeded) <= len(filtered) {
+				for _, win := range windows {
+					if !dp.PointTime.Before(win.Start) && !dp.PointTime.After(win.End) {
+						// Check if we have contiguous points
+						lastPointIndex := i + pointsNeeded - 1
+						lastPointTime := filtered[lastPointIndex].PointTime
+						if lastPointTime.Sub(dp.PointTime) == time.Duration(pointsNeeded-1)*period {
+							naiveCaseIdx = i
+							break
+						}
+					}
+				}
+				if naiveCaseIdx >= 0 {
+					break
+				}
+			}
+		}
+
+		// If no naive case was found, use the first valid window
+		if naiveCaseIdx < 0 && len(results) > 0 {
+			log.Printf("Warning: Could not determine naive case, using first valid window")
+			// Find the earliest valid window
+			earliest := results[0]
+			earliest.start = -1
+			earliest.avg = 0
+			for _, res := range results {
+				if earliest.start < 0 || filtered[res.start].PointTime.Before(filtered[earliest.start].PointTime) {
+					earliest = res
+				}
+			}
+			naiveCaseIdx = earliest.start
+		}
+
+		// Calculate naive case carbon intensity
+		var naiveCaseOption sharedtypes.ScheduleOption
+		if naiveCaseIdx >= 0 {
+			sum := 0.0
+			for j := 0; j < pointsNeeded; j++ {
+				sum += filtered[naiveCaseIdx+j].Value
+			}
+			naiveAvg := sum / float64(pointsNeeded)
+			naiveCaseOption = sharedtypes.ScheduleOption{
+				Time:         filtered[naiveCaseIdx].PointTime,
+				Zone:         firstZoneString,
+				CO2Intensity: naiveAvg,
+			}
+		} else {
+			// This should not happen since we have results, but just in case
+			naiveCaseOption = options[0]
+			log.Printf("Warning: Could not calculate naive case, using ideal case instead")
+		}
+
+		// Calculate median case (middle carbon intensity)
+		medianResultIdx := len(results) / 2
+		medianResult := results[medianResultIdx]
+		medianCaseOption := sharedtypes.ScheduleOption{
+			Time:         filtered[medianResult.start].PointTime,
+			Zone:         firstZoneString,
+			CO2Intensity: medianResult.avg,
+		}
+
+		// Calculate carbon savings percentages
 		ideal := options[0]
+		var carbonSavings sharedtypes.CarbonSavings
+
+		// vs Worst Case
+		if worstCaseOption.CO2Intensity > 0 {
+			carbonSavings.VsWorstCase = ((worstCaseOption.CO2Intensity - ideal.CO2Intensity) / worstCaseOption.CO2Intensity) * 100
+		}
+
+		// vs Naive Case
+		if naiveCaseOption.CO2Intensity > 0 {
+			carbonSavings.VsNaiveCase = ((naiveCaseOption.CO2Intensity - ideal.CO2Intensity) / naiveCaseOption.CO2Intensity) * 100
+		}
+
+		// vs Median Case
+		if medianCaseOption.CO2Intensity > 0 {
+			carbonSavings.VsMedianCase = ((medianCaseOption.CO2Intensity - ideal.CO2Intensity) / medianCaseOption.CO2Intensity) * 100
+		}
+
 		return &sharedtypes.ScheduleResponse{
-			Ideal:   ideal,
-			Options: options,
+			Ideal:         ideal,
+			Options:       options,
+			WorstCase:     worstCaseOption,
+			NaiveCase:     naiveCaseOption,
+			MedianCase:    medianCaseOption,
+			CarbonSavings: carbonSavings,
 		}, nil
 	} else {
 		log.Printf("WattTime forecast received but contains no data points for region %s", firstPowerZone)
