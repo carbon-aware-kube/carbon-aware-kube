@@ -1,0 +1,23 @@
+# permissions for end users to view carbonawarejobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: carbonawarejob-viewer-role
+rules:
+- apiGroups:
+  - batch.carbon-aware-kube.dev
+  resources:
+  - carbonawarejobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch.carbon-aware-kube.dev
+  resources:
+  - carbonawarejobs/status
+  verbs:
+  - get
