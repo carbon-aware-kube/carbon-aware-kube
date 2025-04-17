@@ -5,6 +5,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - batch.carbon-aware-kube.dev
   resources:
   - carbonawarejobs
