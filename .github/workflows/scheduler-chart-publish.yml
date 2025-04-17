@@ -13,6 +13,8 @@ on:
 
 jobs:
   publish-chart:
+    permissions:
+      contents: write
     uses: ./.github/workflows/publish-chart.yml
     with:
       chart_path: scheduler/helm/carbon-aware-scheduler
