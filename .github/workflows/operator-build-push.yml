@@ -13,7 +13,7 @@ on:
 env:
   REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY_URL }}
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  IMAGE_NAME: carbon-aware-scheduler/operator
+  IMAGE_NAME: carbon-aware-kube/operator
 
 jobs:
   build-and-push:
