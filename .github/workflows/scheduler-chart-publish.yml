@@ -11,42 +11,8 @@ on:
       - '.github/workflows/scheduler-chart-publish.yml'
 
 jobs:
-  package:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-
-      - name: Package Helm chart
-        run: |
-          mkdir -p .cr-release-packages
-          helm package scheduler/helm/carbon-aware-scheduler --destination .cr-release-packages
-
-      - name: Create Helm repo index
-        run: |
-          mkdir -p .cr-index
-          helm repo index .cr-release-packages --url https://carbon-aware-kube.dev --merge .cr-index/index.yaml || true
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          name: release-packages
-          path: .cr-release-packages
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          name: release-index
-          path: .cr-index
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: package
-    permissions:
-      id-token: write
-
-    steps:
-      - name: Deploy to GH Pages
-        uses: actions/deploy-pages@v4
+  publish-chart:
+    uses: ./.github/workflows/publish-chart.yml
+    with:
+      chart_path: scheduler/helm/carbon-aware-scheduler
+    secrets: inherit

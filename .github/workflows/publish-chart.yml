@@ -1,0 +1,48 @@
+name: Publish a chart to Github Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+        chart_path:
+            description: Path to Helm chart
+            type: string
+            required: true
+
+concurrency:
+    group: "publish-chart"
+        
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Download existing index.yaml
+        run: |
+          mkdir .gh-pages
+          curl -sSfL https://carbon-aware-kube.dev/index.yaml -o .gh-pages/index.yaml || touch .gh-pages/index.yaml
+
+      - name: Package chart
+        run: |
+          mkdir -p .packages
+          helm package ${{ inputs.chart_path }} --destination .packages
+
+      - name: Merge index.yaml
+        run: |
+          helm repo index .packages --url https://carbon-aware-kube.dev --merge .gh-pages/index.yaml
+
+      - name: Copy index and packages to deploy dir
+        run: |
+          mkdir -p .deploy
+          cp .packages/* .deploy/
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .deploy
+          publish_branch: gh-pages
+          destination_dir: charts
