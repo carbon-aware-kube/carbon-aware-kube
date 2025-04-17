@@ -23,7 +23,7 @@ jobs:
       - name: Download existing index.yaml
         run: |
           mkdir .gh-pages
-          curl -sSfL https://carbon-aware-kube.dev/index.yaml -o .gh-pages/index.yaml || true
+          curl -sSfL https://carbon-aware-kube.dev/charts/index.yaml -o .gh-pages/index.yaml || true
 
       - name: Package chart
         run: |
@@ -33,9 +33,9 @@ jobs:
       - name: Merge index.yaml
         run: |
           if [ -f .gh-pages/index.yaml ]; then
-            helm repo index .packages --url https://carbon-aware-kube.dev --merge .gh-pages/index.yaml
+            helm repo index .packages --url https://carbon-aware-kube.dev/charts --merge .gh-pages/index.yaml
           else
-            helm repo index .packages --url https://carbon-aware-kube.dev
+            helm repo index .packages --url https://carbon-aware-kube.dev/charts
           fi
 
       - name: Copy index and packages to deploy dir
