@@ -1,4 +1,4 @@
-name: Package and Push Helm Chart
+name: Package and Push Scheduler Helm Chart
 
 on:
   release:
@@ -6,18 +6,18 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'charts/carbon-aware-scheduler/**'
-      - '.github/workflows/helm-chart-publish.yml'
+      - 'scheduler/helm/carbon-aware-scheduler/**'
+      - '.github/workflows/scheduler-chart-publish.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY_URL }}
-  CHART_PATH: ./charts/carbon-aware-scheduler
+  CHART_PATH: ./scheduler/helm/carbon-aware-scheduler
   CHART_NAME: scheduler/chart
 
 jobs:
   package-and-push:
-    name: Package and Push Helm Chart
+    name: Package and Push Scheduler Helm Chart
     runs-on: ubuntu-latest
     permissions:
       contents: read
