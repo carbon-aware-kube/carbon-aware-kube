@@ -7,7 +7,7 @@ on:
     branches: [main, master]
     paths:
       - 'scheduler/**'
-      - '.github/workflows/docker-build-push.yml'
+      - '.github/workflows/scheduler-build-push.yml'
   workflow_dispatch:
 
 env:
