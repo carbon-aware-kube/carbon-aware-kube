@@ -1,7 +1,7 @@
 name: Publish a chart to Github Pages
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
         chart_path:
             description: Path to Helm chart
