@@ -1,8 +1,7 @@
 replicaCount: 1
 
 image:
-  registry: "us-central1-docker.pkg.dev/carbon-aware-kube"
-  repository: "carbon-aware-scheduler/scheduler"
+  repository: "ghcr.io/carbon-aware-kube/scheduler"
   tag: latest
   pullPolicy: IfNotPresent
 
