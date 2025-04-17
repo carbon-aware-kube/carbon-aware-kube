@@ -12,12 +12,12 @@ import (
 	"sync" // For handling token refresh safely
 	"time"
 
-	"github.com/carbon-aware-kube/web/internal/zones" // To use PowerZone type
+	"github.com/carbon-aware-kube/scheduler/internal/zones" // To use PowerZone type
 )
 
 const (
-	baseURL    = "https://api.watttime.org"
-	loginPath  = "/login"
+	baseURL      = "https://api.watttime.org"
+	loginPath    = "/login"
 	forecastPath = "/v3/forecast"
 )
 
@@ -153,7 +153,7 @@ func (c *Client) GetForecast(ctx context.Context, region zones.PowerZone, signal
 		req.Header.Set("Authorization", "Bearer "+newToken)
 		// Need to recreate the request body reader if it was consumed, but GET has no body
 		// Ensure we close the previous response body before making a new request
-		resp.Body.Close()                                // Close the old response body explicitly
+		resp.Body.Close()                                 // Close the old response body explicitly
 		resp, err = c.httpClient.Do(req.WithContext(ctx)) // Re-execute the request using the same context
 		if err != nil {
 			return nil, fmt.Errorf("error performing forecast request after re-login: %w", err)

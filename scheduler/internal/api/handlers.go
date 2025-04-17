@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/carbon-aware-kube/web/internal/zones"
-	"github.com/carbon-aware-kube/web/internal/watttime"
-	"github.com/carbon-aware-kube/web/internal/scheduling"
-	"github.com/carbon-aware-kube/web/internal/sharedtypes"
+	"github.com/carbon-aware-kube/scheduler/internal/scheduling"
+	"github.com/carbon-aware-kube/scheduler/internal/sharedtypes"
+	"github.com/carbon-aware-kube/scheduler/internal/watttime"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 )
 
 // Handler holds dependencies for API handlers

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/carbon-aware-kube/web/internal/zones"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 )
 
 // MockWattTimeClient is a mock implementation of WattTimeClientInterface for testing.
@@ -29,10 +29,10 @@ func (m *MockWattTimeClient) GetForecast(ctx context.Context, region zones.Power
 	// Return a default empty response if neither ForecastResponse nor Error is set
 	return &ForecastResponse{
 		Meta: ForecastMeta{ // Correct struct name
-			Region:                string(region), // Use the string value directly
-			SignalType:            signalType,
+			Region:                 string(region), // Use the string value directly
+			SignalType:             signalType,
 			DataPointPeriodSeconds: 300, // Default 5 min
-			GeneratedAt:           time.Now().UTC(),
+			GeneratedAt:            time.Now().UTC(),
 		},
 		Data: []ForecastDataPoint{},
 	}, nil

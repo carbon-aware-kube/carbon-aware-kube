@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/carbon-aware-kube/web/internal/sharedtypes"
-	"github.com/carbon-aware-kube/web/internal/watttime"
-	"github.com/carbon-aware-kube/web/internal/zones"
+	"github.com/carbon-aware-kube/scheduler/internal/sharedtypes"
+	"github.com/carbon-aware-kube/scheduler/internal/watttime"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 )
 
 func CalculateBestSchedule(
@@ -49,19 +49,19 @@ func CalculateBestSchedule(
 
 		// For each window, calculate the extended end time that includes the operation duration
 		extendedWindows := make([]struct {
-			start time.Time
-			end   time.Time
+			start       time.Time
+			end         time.Time
 			extendedEnd time.Time
 		}, len(windows))
 
 		for i, win := range windows {
 			extendedWindows[i] = struct {
-				start time.Time
-				end   time.Time
+				start       time.Time
+				end         time.Time
 				extendedEnd time.Time
 			}{
-				start: win.Start,
-				end:   win.End,
+				start:       win.Start,
+				end:         win.End,
 				extendedEnd: win.End.Add(duration),
 			}
 		}
@@ -73,7 +73,7 @@ func CalculateBestSchedule(
 				// Include data points that are:
 				// 1. Within the original window (for task start times), OR
 				// 2. Within the extended window (for calculating carbon intensity of tasks that start near window end)
-				if (!dp.PointTime.Before(win.start) && !dp.PointTime.After(win.extendedEnd)) {
+				if !dp.PointTime.Before(win.start) && !dp.PointTime.After(win.extendedEnd) {
 					filtered = append(filtered, dp)
 					break
 				}

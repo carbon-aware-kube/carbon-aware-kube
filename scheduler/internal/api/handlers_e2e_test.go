@@ -12,10 +12,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/carbon-aware-kube/web/internal/api"
-	"github.com/carbon-aware-kube/web/internal/sharedtypes"
-	"github.com/carbon-aware-kube/web/internal/watttime"
-	"github.com/carbon-aware-kube/web/internal/zones"
+	"github.com/carbon-aware-kube/scheduler/internal/api"
+	"github.com/carbon-aware-kube/scheduler/internal/sharedtypes"
+	"github.com/carbon-aware-kube/scheduler/internal/watttime"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -37,10 +37,10 @@ var _ = Describe("Schedule API Endpoint E2E", func() {
 		startTime = time.Now().UTC().Truncate(5 * time.Minute)
 		mockWtClient.ForecastResponse = &watttime.ForecastResponse{
 			Meta: watttime.ForecastMeta{
-				Region:                testRegionAbbrev,
-				SignalType:            "co2_moer",
-				DataPointPeriodSeconds: 300, // 5 minutes
-				GeneratedAt:           startTime.Add(-time.Hour), // Arbitrary past time
+				Region:                 testRegionAbbrev,
+				SignalType:             "co2_moer",
+				DataPointPeriodSeconds: 300,                       // 5 minutes
+				GeneratedAt:            startTime.Add(-time.Hour), // Arbitrary past time
 			},
 			Data: []watttime.ForecastDataPoint{
 				{PointTime: startTime, Value: 100},
@@ -95,18 +95,18 @@ var _ = Describe("Schedule API Endpoint E2E", func() {
 
 			// Expect the best time slot (lowest value) to be returned
 			Expect(respBody.Ideal.Time).To(Equal(startTime.Add(5 * time.Minute))) // Gomega assertion
-			Expect(respBody.Ideal.CO2Intensity).To(Equal(50.0)) // Gomega assertion
-			Expect(respBody.Ideal.Zone).To(Equal("TestZone")) // Gomega assertion
+			Expect(respBody.Ideal.CO2Intensity).To(Equal(50.0))                   // Gomega assertion
+			Expect(respBody.Ideal.Zone).To(Equal("TestZone"))                     // Gomega assertion
 
 			Expect(len(respBody.Options)).To(Equal(3)) // Gomega assertion
 			// Check first option (should be the ideal one)
 			Expect(respBody.Options[0].Time).To(Equal(startTime.Add(5 * time.Minute))) // Gomega assertion
-			Expect(respBody.Options[0].CO2Intensity).To(Equal(50.0)) // Gomega assertion
+			Expect(respBody.Options[0].CO2Intensity).To(Equal(50.0))                   // Gomega assertion
 			// Check second option
 			Expect(respBody.Options[1].Time).To(Equal(startTime.Add(10 * time.Minute))) // Gomega assertion
-			Expect(respBody.Options[1].CO2Intensity).To(Equal(75.0)) // Gomega assertion
+			Expect(respBody.Options[1].CO2Intensity).To(Equal(75.0))                    // Gomega assertion
 			// Check third option
-			Expect(respBody.Options[2].Time).To(Equal(startTime)) // Gomega assertion
+			Expect(respBody.Options[2].Time).To(Equal(startTime))     // Gomega assertion
 			Expect(respBody.Options[2].CO2Intensity).To(Equal(100.0)) // Gomega assertion
 		})
 
@@ -121,7 +121,7 @@ var _ = Describe("Schedule API Endpoint E2E", func() {
 					GeneratedAt:            startTime.Add(-time.Hour),
 				},
 				Data: []watttime.ForecastDataPoint{
-					{PointTime: startTime, Value: 500}, // Naive case (start of window)
+					{PointTime: startTime, Value: 500},                      // Naive case (start of window)
 					{PointTime: startTime.Add(5 * time.Minute), Value: 400}, // Ideal case (lowest)
 					{PointTime: startTime.Add(10 * time.Minute), Value: 600},
 					{PointTime: startTime.Add(15 * time.Minute), Value: 650},
@@ -189,9 +189,9 @@ var _ = Describe("Schedule API Endpoint E2E", func() {
 			GinkgoWriter.Printf("Worst: %v, CO2: %.2f\n", respBody.WorstCase.Time, respBody.WorstCase.CO2Intensity)
 			GinkgoWriter.Printf("Naive: %v, CO2: %.2f\n", respBody.NaiveCase.Time, respBody.NaiveCase.CO2Intensity)
 			GinkgoWriter.Printf("Median: %v, CO2: %.2f\n", respBody.MedianCase.Time, respBody.MedianCase.CO2Intensity)
-			GinkgoWriter.Printf("Carbon Savings - vs Worst: %.2f%%, vs Naive: %.2f%%, vs Median: %.2f%%\n", 
-				respBody.CarbonSavings.VsWorstCase, 
-				respBody.CarbonSavings.VsNaiveCase, 
+			GinkgoWriter.Printf("Carbon Savings - vs Worst: %.2f%%, vs Naive: %.2f%%, vs Median: %.2f%%\n",
+				respBody.CarbonSavings.VsWorstCase,
+				respBody.CarbonSavings.VsNaiveCase,
 				respBody.CarbonSavings.VsMedianCase)
 		})
 	})

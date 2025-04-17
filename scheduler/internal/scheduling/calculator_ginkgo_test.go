@@ -7,10 +7,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/carbon-aware-kube/web/internal/scheduling"
-	"github.com/carbon-aware-kube/web/internal/sharedtypes"
-	"github.com/carbon-aware-kube/web/internal/watttime"
-	"github.com/carbon-aware-kube/web/internal/zones"
+	"github.com/carbon-aware-kube/scheduler/internal/scheduling"
+	"github.com/carbon-aware-kube/scheduler/internal/sharedtypes"
+	"github.com/carbon-aware-kube/scheduler/internal/watttime"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 )
 
 var _ = Describe("CalculateBestSchedule", func() {

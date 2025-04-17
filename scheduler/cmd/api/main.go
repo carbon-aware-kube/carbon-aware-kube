@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/carbon-aware-kube/web/internal/api"
-	"github.com/carbon-aware-kube/web/internal/watttime"
-	"github.com/carbon-aware-kube/web/internal/zones"
+	"github.com/carbon-aware-kube/scheduler/internal/api"
+	"github.com/carbon-aware-kube/scheduler/internal/watttime"
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

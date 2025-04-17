@@ -6,14 +6,14 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'web/**'
+      - 'scheduler/**'
       - '.github/workflows/docker-build-push.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY_URL }}
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  IMAGE_NAME: carbon-aware-scheduler/web
+  IMAGE_NAME: carbon-aware-scheduler/scheduler
 
 jobs:
   build-and-push:
@@ -64,8 +64,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./web
-          file: ./web/Dockerfile
+          context: ./scheduler
+          file: ./scheduler/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

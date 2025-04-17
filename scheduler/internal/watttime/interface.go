@@ -2,7 +2,8 @@ package watttime
 
 import (
 	"context"
-	"github.com/carbon-aware-kube/web/internal/zones"
+
+	"github.com/carbon-aware-kube/scheduler/internal/zones"
 )
 
 // WattTimeClientInterface defines the methods required from a WattTime client.
