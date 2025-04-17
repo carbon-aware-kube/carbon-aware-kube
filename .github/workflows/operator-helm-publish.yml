@@ -1,105 +1,105 @@
-name: Operator Helm Chart Publish
+# name: Operator Helm Chart Publish
 
-on:
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Chart version to publish (leave empty to use release tag or default)'
-        required: false
-        default: ''
+# on:
+#   release:
+#     types: [published]
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: 'Chart version to publish (leave empty to use release tag or default)'
+#         required: false
+#         default: ''
 
-jobs:
-  publish-helm-chart:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+# jobs:
+#   publish-helm-chart:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'v3.10.0'
+#       - name: Set up Helm
+#         uses: azure/setup-helm@v3
+#         with:
+#           version: 'v3.10.0'
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+#       - name: Configure Git
+#         run: |
+#           git config user.name "$GITHUB_ACTOR"
+#           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Extract version
-        id: extract_version
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            VERSION="${{ github.event.release.tag_name }}"
-            VERSION=${VERSION#v}  # Remove 'v' prefix if present
-          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="0.1.0"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Using version: $VERSION"
+#       - name: Extract version
+#         id: extract_version
+#         run: |
+#           if [[ "${{ github.event_name }}" == "release" ]]; then
+#             VERSION="${{ github.event.release.tag_name }}"
+#             VERSION=${VERSION#v}  # Remove 'v' prefix if present
+#           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+#             VERSION="${{ github.event.inputs.version }}"
+#           else
+#             VERSION="0.1.0"
+#           fi
+#           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+#           echo "Using version: $VERSION"
 
-      - name: Update Chart version
-        run: |
-          VERSION="${{ steps.extract_version.outputs.VERSION }}"
-          sed -i "s/version: .*/version: $VERSION/" operator/helm/carbon-aware-kube/Chart.yaml
-          sed -i "s/appVersion: .*/appVersion: \"$VERSION\"/" operator/helm/carbon-aware-kube/Chart.yaml
-          echo "Updated Chart.yaml with version $VERSION"
-          cat operator/helm/carbon-aware-kube/Chart.yaml
+#       - name: Update Chart version
+#         run: |
+#           VERSION="${{ steps.extract_version.outputs.VERSION }}"
+#           sed -i "s/version: .*/version: $VERSION/" operator/helm/carbon-aware-kube/Chart.yaml
+#           sed -i "s/appVersion: .*/appVersion: \"$VERSION\"/" operator/helm/carbon-aware-kube/Chart.yaml
+#           echo "Updated Chart.yaml with version $VERSION"
+#           cat operator/helm/carbon-aware-kube/Chart.yaml
 
-      - name: Package Helm chart
-        run: |
-          mkdir -p .cr-release-packages
-          helm package operator/helm/carbon-aware-kube --destination .cr-release-packages
+#       - name: Package Helm chart
+#         run: |
+#           mkdir -p .cr-release-packages
+#           helm package operator/helm/carbon-aware-kube --destination .cr-release-packages
 
-      - name: Setup GitHub Pages
-        id: pages
-        uses: actions/configure-pages@v3
+#       - name: Setup GitHub Pages
+#         id: pages
+#         uses: actions/configure-pages@v3
 
-      - name: Upload chart to GitHub Pages
-        uses: actions/upload-artifact@v3
-        with:
-          name: helm-chart
-          path: .cr-release-packages/*.tgz
-          if-no-files-found: error
+#       - name: Upload chart to GitHub Pages
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: helm-chart
+#           path: .cr-release-packages/*.tgz
+#           if-no-files-found: error
 
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v3
-        with:
-          ref: gh-pages
-          path: gh-pages
-          fetch-depth: 0
-          if-exists: true
-        continue-on-error: true
+#       - name: Checkout gh-pages branch
+#         uses: actions/checkout@v3
+#         with:
+#           ref: gh-pages
+#           path: gh-pages
+#           fetch-depth: 0
+#           if-exists: true
+#         continue-on-error: true
 
-      - name: Create gh-pages branch if it doesn't exist
-        run: |
-          if [ ! -d "gh-pages" ]; then
-            mkdir -p gh-pages
-            cd gh-pages
-            git init
-            git checkout -b gh-pages
-            git remote add origin https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-            echo "# Carbon Aware Kube Helm Charts" > README.md
-            mkdir -p charts
-            git add README.md
-            git commit -m "Initial gh-pages branch"
-          fi
+#       - name: Create gh-pages branch if it doesn't exist
+#         run: |
+#           if [ ! -d "gh-pages" ]; then
+#             mkdir -p gh-pages
+#             cd gh-pages
+#             git init
+#             git checkout -b gh-pages
+#             git remote add origin https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+#             echo "# Carbon Aware Kube Helm Charts" > README.md
+#             mkdir -p charts
+#             git add README.md
+#             git commit -m "Initial gh-pages branch"
+#           fi
 
-      - name: Copy chart to gh-pages
-        run: |
-          mkdir -p gh-pages/charts
-          cp .cr-release-packages/*.tgz gh-pages/charts/
-          cd gh-pages
-          helm repo index . --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/charts
+#       - name: Copy chart to gh-pages
+#         run: |
+#           mkdir -p gh-pages/charts
+#           cp .cr-release-packages/*.tgz gh-pages/charts/
+#           cd gh-pages
+#           helm repo index . --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/charts
 
-      - name: Commit and push gh-pages
-        run: |
-          cd gh-pages
-          git add .
-          git commit -m "Update Helm chart to version ${{ steps.extract_version.outputs.VERSION }}"
-          git push -u origin gh-pages
+#       - name: Commit and push gh-pages
+#         run: |
+#           cd gh-pages
+#           git add .
+#           git commit -m "Update Helm chart to version ${{ steps.extract_version.outputs.VERSION }}"
+#           git push -u origin gh-pages
