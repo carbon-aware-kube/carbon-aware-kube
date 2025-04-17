@@ -3,12 +3,12 @@ entries:
   carbon-aware-scheduler:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2025-04-17T23:21:38.245408898Z"
+    created: "2025-04-17T23:22:43.479099528Z"
     description: A Helm chart for the Carbon Aware Scheduler service
-    digest: 9b2e0e78ef96fea5d7413769d53b6d4aeb9939f1b93fd2ec513f8b4fdd6bfd75
+    digest: d1239d31f2a3fe39f88db85800e618e0898b85f56411eaa57d50c403577b3a96
     name: carbon-aware-scheduler
     type: application
     urls:
-    - https://carbon-aware-kube.dev/charts/carbon-aware-scheduler-0.1.0.tgz
+    - https://carbon-aware-kube.dev/carbon-aware-scheduler-0.1.0.tgz
     version: 0.1.0
-generated: "2025-04-17T23:21:38.244977087Z"
+generated: "2025-04-17T23:22:43.478638075Z"
