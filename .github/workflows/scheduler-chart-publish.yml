@@ -33,10 +33,12 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
+          name: release-packages
           path: .cr-release-packages
 
       - uses: actions/upload-pages-artifact@v3
         with:
+          name: release-index
           path: .cr-index
 
   deploy:
