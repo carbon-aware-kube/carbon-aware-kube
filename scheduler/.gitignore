@@ -13,11 +13,5 @@
 # Go workspace file
 /go.work
 
-# Go module directory
-/go.mod
-
-# Go sum file
-/go.sum
-
 # Env file
 .env
