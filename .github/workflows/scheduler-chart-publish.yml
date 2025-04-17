@@ -11,7 +11,7 @@ on:
       - '.github/workflows/scheduler-chart-publish.yml'
 
 jobs:
-  publish:
+  package:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,13 @@ jobs:
           mkdir -p .cr-index
           helm repo index .cr-release-packages --url https://carbon-aware-kube.dev --merge .cr-index/index.yaml || true
 
-      - name: Publish to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .cr-release-packages
-          publish_branch: gh-pages
+          path: .cr-release-packages
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: package
+    steps:
+      - name: Deploy to GH Pages
+        uses: actions/deploy-pages@v4
