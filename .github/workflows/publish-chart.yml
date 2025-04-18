@@ -38,6 +38,7 @@ jobs:
           else
             helm package ${{ inputs.chart_path }} --destination .packages
           fi
+          ls -1 .packages
 
       - name: Merge index.yaml
         run: |
@@ -46,6 +47,7 @@ jobs:
           else
             helm repo index .packages
           fi
+          cat index.yaml
 
       - name: Copy index and packages to deploy dir
         run: |
