@@ -18,4 +18,5 @@ jobs:
     uses: ./.github/workflows/publish-chart.yml
     with:
       chart_path: operator/helm/carbon-aware-kube
+      update_dependencies: true
     secrets: inherit

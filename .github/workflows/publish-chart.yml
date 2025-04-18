@@ -7,6 +7,11 @@ on:
             description: Path to Helm chart
             type: string
             required: true
+        update_dependencies:
+            description: Update dependencies
+            type: boolean
+            required: false
+            default: false
 
 concurrency:
     group: "publish-chart"
@@ -28,7 +33,11 @@ jobs:
       - name: Package chart
         run: |
           mkdir -p .packages
-          helm package ${{ inputs.chart_path }} --destination .packages
+          if [[ "${{ inputs.update_dependencies }}" == "true" ]]; then
+            helm package --dependency-update ${{ inputs.chart_path }} --destination .packages
+          else
+            helm package ${{ inputs.chart_path }} --destination .packages
+          fi
 
       - name: Merge index.yaml
         run: |
