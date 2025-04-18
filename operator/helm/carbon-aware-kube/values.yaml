@@ -27,9 +27,6 @@ serviceAccount:
   create: true
   name: "controller-manager"
 
-# Namespace to deploy the operator in
-namespace: "carbon-aware-kube-system"
-
 # Node selector for the deployment
 nodeSelector: {}
 

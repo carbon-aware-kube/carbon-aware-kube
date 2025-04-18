@@ -1,0 +1,31 @@
+# Helm chart dependencies
+**/charts/
+**/Chart.lock
+
+# Helm package files
+*.tgz
+
+# Temporary build files
+.build/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Go specific
+/bin/
+/vendor/
+/dist/
+*.exe
+*.test
+*.prof
+
+# Kubernetes generated files
+kubeconfig

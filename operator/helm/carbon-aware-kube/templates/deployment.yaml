@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "carbon-aware-kube.fullname" . }}-controller-manager
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "carbon-aware-kube.labels" . | nindent 4 }}
     app.kubernetes.io/component: controller-manager
@@ -21,7 +21,7 @@ spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
       - name: manager
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command:
         - /manager
