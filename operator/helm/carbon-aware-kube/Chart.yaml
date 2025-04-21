@@ -9,5 +9,5 @@ appVersion: "0.1.0"
 dependencies:
   - name: carbon-aware-scheduler
     version: "0.1.0"
-    repository: "https://carbon-aware-kube.dev/charts/"
-    condition: scheduler.local.enabled
+    repository: file://../../../scheduler/helm/carbon-aware-scheduler
+    condition: carbon-aware-scheduler.local.enabled

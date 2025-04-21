@@ -204,7 +204,7 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 						},
 					},
 					MaxDelay: metav1.Duration{Duration: time.Hour},
-					Location: "gcp:us-west-2",
+					Location: "gcp:us-west2",
 				},
 			}
 
@@ -310,7 +310,7 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 				},
 				Spec: batchv1alpha1.CarbonAwareJobSpec{
 					MaxDelay: metav1.Duration{Duration: 1 * time.Hour},
-					Location: "gcp:us-west-2",
+					Location: "gcp:us-west2",
 					Template: batchv1alpha1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
@@ -376,7 +376,7 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 				},
 				Spec: batchv1alpha1.CarbonAwareJobSpec{
 					MaxDelay: metav1.Duration{Duration: 1 * time.Hour},
-					Location: "gcp:us-west-2",
+					Location: "gcp:us-west2",
 					Template: batchv1alpha1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
@@ -496,7 +496,7 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 				},
 				Spec: batchv1alpha1.CarbonAwareJobSpec{
 					MaxDelay: metav1.Duration{Duration: 1 * time.Hour},
-					Location: "gcp:us-west-2",
+					Location: "gcp:us-west2",
 					Template: batchv1alpha1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{

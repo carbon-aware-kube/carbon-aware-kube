@@ -65,9 +65,9 @@ Create the name of the service account to use
 Determine the scheduler URL to use
 */}}
 {{- define "carbon-aware-kube.schedulerUrl" -}}
-{{- if .Values.scheduler.local.enabled }}
-{{- printf "http://%s-carbon-aware-scheduler:8080" .Release.Name }}
+{{- if (index .Values "carbon-aware-scheduler" "local" "enabled") }}
+{{- printf "http://%s-carbon-aware-scheduler.%s.svc.cluster.local:8080" .Release.Name .Release.Namespace }}
 {{- else }}
-{{- required "External scheduler URL must be provided when local scheduler is disabled" .Values.scheduler.external.url }}
+{{- required "External scheduler URL must be provided when local scheduler is disabled" (index .Values "carbon-aware-scheduler" "external" "url") }}
 {{- end }}
 {{- end }}

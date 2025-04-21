@@ -27,6 +27,9 @@ spec:
         - /manager
         args:
         - --leader-elect
+        env:
+        - name: CARBON_AWARE_SCHEDULER_URL
+          value: {{ include "carbon-aware-kube.schedulerUrl" . }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         securityContext:

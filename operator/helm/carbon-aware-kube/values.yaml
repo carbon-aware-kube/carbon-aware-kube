@@ -37,7 +37,7 @@ tolerations: []
 affinity: {}
 
 # Scheduler configuration
-scheduler:
+carbon-aware-scheduler:
   local:
     enabled: true
   external:

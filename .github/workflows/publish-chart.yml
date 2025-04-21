@@ -52,6 +52,9 @@ jobs:
       - name: Copy index and packages to deploy dir
         run: |
           mkdir -p .deploy
+          # NOTE -- CURRENTLY FACING AN ISSUE WHERE DEPLOYING ONE OF SCHEDULER OR OPERATOR RESULTS IN THE OTHER CHART BEING LOST FROM THE GH PAGES
+          # I need to switch to using chart-releaser: https://github.com/helm/chart-releaser
+          # Let's store packages in Github Releases and host my index.yaml at carbon-aware-kube.dev/charts/index.yaml
           cp .packages/* .deploy/
 
       - name: Publish to GitHub Pages

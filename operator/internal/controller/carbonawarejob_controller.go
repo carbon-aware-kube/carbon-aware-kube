@@ -212,8 +212,8 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		jobDuration = carbonAwareJob.Spec.MaxDuration.Duration
 	}
 
-	// Default location to "gcp:us-west-2" if not specified
-	location := "gcp:us-west-2"
+	// Default location to "gcp:us-west2" if not specified
+	location := "gcp:us-west2"
 	if carbonAwareJob.Spec.Location != "" {
 		location = carbonAwareJob.Spec.Location
 	}
