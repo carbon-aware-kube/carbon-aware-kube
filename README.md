@@ -10,7 +10,7 @@ Currently, this project is in alpha and only supports a single custom resource: 
 ### Prerequisites
 
 1. A Kubernetes cluster
-2. A WattTime API key
+2. A [WattTime API key](https://docs.watttime.org/)
 
 ### Helm Install (development)
 
