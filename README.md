@@ -21,7 +21,7 @@ kubectl create namespace carbon-aware-kube
 
 Next, create a secret for the WattTime API key:
 ```bash
-kubectl create secret generic carbon-aware-watttime --from-literal=username=${WATTIME_USERNAME} --from-literal=password=${WATTIME_PASSWORD} -n carbon-aware-kube
+kubectl create secret generic carbon-aware-watttime --from-literal=username=$WATTIME_USER --from-literal=password=$WATTIME_PASSWORD -n carbon-aware-kube
 ```
 
 Next, install the operator:

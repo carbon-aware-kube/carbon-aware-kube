@@ -37,7 +37,7 @@ spec:
             - name: example
               image: busybox
               command: ["sh", "-c", "echo Hello World"]
-          restartPolicy: Never' | kubectl apply -f -
+          restartPolicy: Never' | envsubst | kubectl apply -f -
 ```
 
 2. Check the status of the `CarbonAwareJob`
