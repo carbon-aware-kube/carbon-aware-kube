@@ -47,7 +47,6 @@ jobs:
           else
             helm repo index .packages
           fi
-          cat index.yaml
 
       - name: Copy index and packages to deploy dir
         run: |
