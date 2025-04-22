@@ -416,18 +416,18 @@ func (r *CarbonAwareJobReconciler) constructJobFromTemplate(carbonAwareJob *batc
 				"carbon-aware-kube.dev/parent-resource-uid":  string(carbonAwareJob.UID),
 			},
 		},
-		Spec: carbonAwareJob.Spec.Template.Spec,
+		Spec: carbonAwareJob.Spec.JobTemplate.Spec,
 	}
 
 	// Copy any labels and annotations from the template metadata
-	if carbonAwareJob.Spec.Template.Metadata.Labels != nil {
-		for k, v := range carbonAwareJob.Spec.Template.Metadata.Labels {
+	if carbonAwareJob.Spec.JobTemplate.Metadata.Labels != nil {
+		for k, v := range carbonAwareJob.Spec.JobTemplate.Metadata.Labels {
 			job.Labels[k] = v
 		}
 	}
 
-	if carbonAwareJob.Spec.Template.Metadata.Annotations != nil {
-		for k, v := range carbonAwareJob.Spec.Template.Metadata.Annotations {
+	if carbonAwareJob.Spec.JobTemplate.Metadata.Annotations != nil {
+		for k, v := range carbonAwareJob.Spec.JobTemplate.Metadata.Annotations {
 			job.Annotations[k] = v
 		}
 	}
