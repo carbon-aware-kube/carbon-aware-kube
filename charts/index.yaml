@@ -2,6 +2,21 @@ apiVersion: v1
 entries:
   carbon-aware-kube:
   - apiVersion: v2
+    appVersion: 0.1.5
+    created: "2025-04-22T16:21:37.971588761Z"
+    dependencies:
+    - condition: carbon-aware-scheduler.local.enabled
+      name: carbon-aware-scheduler
+      repository: file://../../../scheduler/helm/carbon-aware-scheduler
+      version: 0.1.0
+    description: A Helm chart for the Carbon Aware Kubernetes Operator
+    digest: 9a9906803da24dadec1ed2481575bf6d9b5d3677aa88c3dc3d96109f5109a772
+    name: carbon-aware-kube
+    type: application
+    urls:
+    - carbon-aware-kube-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v2
     appVersion: 0.1.4
     created: "2025-04-22T04:14:45.384992521Z"
     dependencies:
@@ -72,4 +87,4 @@ entries:
     urls:
     - carbon-aware-scheduler-0.1.0.tgz
     version: 0.1.0
-generated: "2025-04-22T16:20:19.411229466Z"
+generated: "2025-04-22T16:21:37.968813502Z"
