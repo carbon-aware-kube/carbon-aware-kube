@@ -55,6 +55,24 @@ spec:
 EOF
 ```
 
+As opposed to:
+```bash
+kubectl apply -f - <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: example
+spec:
+  template:
+    spec:
+      containers:
+        - name: example
+          image: busybox
+          command: ["sh", "-c", "echo Hello World"]
+EOF
+```
+
+
 ## Contributing
 
 Contributions are extremely welcome! Please open an issue or submit a pull request.

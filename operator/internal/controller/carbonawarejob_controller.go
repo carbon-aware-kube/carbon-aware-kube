@@ -246,9 +246,9 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		carbonAwareJob.Status.ScheduledTime = &optimalTime
 		carbonAwareJob.Status.CarbonIntensity = "unknown"
 		carbonAwareJob.Status.CarbonSavings = &batchv1alpha1.CarbonSavings{
-			VsWorstCase:  "0.00",
-			VsNaiveCase:  "0.00",
-			VsMedianCase: "0.00",
+			VsWorstCase:  "0.00%",
+			VsNaiveCase:  "0.00%",
+			VsMedianCase: "0.00%",
 		}
 	} else {
 		// Use the optimal schedule from the API response
@@ -258,10 +258,10 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		// Update the scheduling decision
 		carbonAwareJob.Status.SchedulingDecision = &batchv1alpha1.SchedulingDecision{
 			OptimalTime:        &optimalTime,
-			OptimalIntensity:   fmt.Sprintf("%.2f", scheduleResp.Ideal.CO2Intensity),
+			OptimalIntensity:   fmt.Sprintf("%.2f gCO2eq/kWh", scheduleResp.Ideal.CO2Intensity),
 			WorstCaseTime:      &worstCaseTime,
-			WorstCaseIntensity: fmt.Sprintf("%.2f", scheduleResp.WorstCase.CO2Intensity),
-			ImmediateIntensity: fmt.Sprintf("%.2f", scheduleResp.NaiveCase.CO2Intensity),
+			WorstCaseIntensity: fmt.Sprintf("%.2f gCO2eq/kWh", scheduleResp.WorstCase.CO2Intensity),
+			ImmediateIntensity: fmt.Sprintf("%.2f gCO2eq/kWh", scheduleResp.NaiveCase.CO2Intensity),
 			ForecastSource:     "carbon-aware-scheduler-api",
 			DecisionReason:     "Optimal time determined based on carbon intensity forecast",
 		}
@@ -271,9 +271,9 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 
 		// Set carbon savings
 		carbonAwareJob.Status.CarbonSavings = &batchv1alpha1.CarbonSavings{
-			VsWorstCase:  fmt.Sprintf("%.2f", scheduleResp.CarbonSavings.VsWorstCase),
-			VsNaiveCase:  fmt.Sprintf("%.2f", scheduleResp.CarbonSavings.VsNaiveCase),
-			VsMedianCase: fmt.Sprintf("%.2f", scheduleResp.CarbonSavings.VsMedianCase),
+			VsWorstCase:  fmt.Sprintf("-%.2f%%", scheduleResp.CarbonSavings.VsWorstCase),
+			VsNaiveCase:  fmt.Sprintf("-%.2f%%", scheduleResp.CarbonSavings.VsNaiveCase),
+			VsMedianCase: fmt.Sprintf("-%.2f%%", scheduleResp.CarbonSavings.VsMedianCase),
 		}
 
 		// Set carbon intensity
