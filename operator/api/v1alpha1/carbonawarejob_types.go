@@ -26,10 +26,10 @@ import (
 
 // CarbonAwareJobSpec defines the desired state of CarbonAwareJob
 type CarbonAwareJobSpec struct {
-	// Template is the job template that will be created when the carbon intensity is optimal
+	// JobTemplate is the job template that will be created when the carbon intensity is optimal
 	// This follows the same structure as the Kubernetes Job template
 	// +kubebuilder:validation:Required
-	Template JobTemplateSpec `json:"template"`
+	JobTemplate JobTemplateSpec `json:"jobTemplate"`
 
 	// MaxDelay defines the maximum time to delay the job execution from submission time
 	// The controller will schedule the job at the optimal time within this delay window

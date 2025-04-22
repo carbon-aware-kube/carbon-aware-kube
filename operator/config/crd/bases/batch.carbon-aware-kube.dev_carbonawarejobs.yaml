@@ -58,26 +58,9 @@ spec:
           spec:
             description: CarbonAwareJobSpec defines the desired state of CarbonAwareJob
             properties:
-              location:
+              jobTemplate:
                 description: |-
-                  Location specifies the geographical location where the job will run
-                  This is used to determine the carbon intensity for that region
-                  If not specified, the controller will use the location of the Kubernetes cluster
-                type: string
-              maxDelay:
-                description: |-
-                  MaxDelay defines the maximum time to delay the job execution from submission time
-                  The controller will schedule the job at the optimal time within this delay window
-                  based on carbon intensity forecasts
-                type: string
-              maxDuration:
-                description: |-
-                  MaxDuration is the maximum duration the job is expected to run
-                  This is used to calculate the optimal start time to minimize carbon emissions
-                type: string
-              template:
-                description: |-
-                  Template is the job template that will be created when the carbon intensity is optimal
+                  JobTemplate is the job template that will be created when the carbon intensity is optimal
                   This follows the same structure as the Kubernetes Job template
                 properties:
                   metadata:
@@ -8552,9 +8535,26 @@ spec:
                 required:
                 - spec
                 type: object
+              location:
+                description: |-
+                  Location specifies the geographical location where the job will run
+                  This is used to determine the carbon intensity for that region
+                  If not specified, the controller will use the location of the Kubernetes cluster
+                type: string
+              maxDelay:
+                description: |-
+                  MaxDelay defines the maximum time to delay the job execution from submission time
+                  The controller will schedule the job at the optimal time within this delay window
+                  based on carbon intensity forecasts
+                type: string
+              maxDuration:
+                description: |-
+                  MaxDuration is the maximum duration the job is expected to run
+                  This is used to calculate the optimal start time to minimize carbon emissions
+                type: string
             required:
+            - jobTemplate
             - maxDelay
-            - template
             type: object
           status:
             description: CarbonAwareJobStatus defines the observed state of CarbonAwareJob
