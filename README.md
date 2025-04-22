@@ -46,14 +46,12 @@ metadata:
 spec:
   maxDelay: "1h"
   maxDuration: "10m"
-  jobTemplate:
+  template:
     spec:
-      template:
-        spec:
-          containers:
-            - name: example
-              image: busybox
-              command: ["sh", "-c", "echo Hello World"]
+      containers:
+        - name: example
+          image: busybox
+          command: ["sh", "-c", "echo Hello World"]
 EOF
 ```
 
