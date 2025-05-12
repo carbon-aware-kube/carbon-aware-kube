@@ -6,8 +6,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
+
+// toISO8601Duration converts a time.Duration to an ISO 8601 duration string (e.g., "PT1H30M")
+func toISO8601Duration(d time.Duration) string {
+	if d < 0 {
+		d = -d
+	}
+	seconds := int64(d.Seconds())
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	secs := seconds % 60
+	result := "PT"
+	if hours > 0 {
+		result += fmt.Sprintf("%dH", hours)
+	}
+	if minutes > 0 {
+		result += fmt.Sprintf("%dM", minutes)
+	}
+	if secs > 0 || (hours == 0 && minutes == 0) {
+		result += fmt.Sprintf("%dS", secs)
+	}
+	return result
+}
 
 // SchedulingClientInterface defines the interface for the carbon-aware scheduling client
 type SchedulingClientInterface interface {
@@ -26,36 +49,42 @@ type TimeRange struct {
 	End   time.Time `json:"end"`
 }
 
-// ScheduleRequest represents the input for the /api/schedule endpoint
+// CloudZone represents a cloud provider and region
+type CloudZone struct {
+	Provider string `json:"provider"`
+	Region   string `json:"region"`
+}
+
+// ScheduleRequest represents the input for the /v0/schedule endpoint
 type ScheduleRequest struct {
 	Windows    []TimeRange `json:"windows"`
 	Duration   string      `json:"duration"`
-	Zones      []string    `json:"zones"`
-	NumOptions *int        `json:"numOptions,omitempty"`
+	Zones      []CloudZone  `json:"zones"`
+	NumOptions *int        `json:"num_options,omitempty"`
 }
 
 // ScheduleOption represents a potential scheduling option
 type ScheduleOption struct {
 	Time         time.Time `json:"time"`
-	Zone         string    `json:"zone"`
-	CO2Intensity float64   `json:"co2Intensity"`
+	Zone         CloudZone `json:"zone"`
+	CO2Intensity float64   `json:"co2_intensity"`
 }
 
 // CarbonSavings represents the carbon savings compared to different scenarios
 type CarbonSavings struct {
-	VsWorstCase  float64 `json:"vsWorstCase"`
-	VsNaiveCase  float64 `json:"vsNaiveCase"`
-	VsMedianCase float64 `json:"vsMedianCase"`
+	VsWorstCase  float64 `json:"vs_worst_case"`
+	VsNaiveCase  float64 `json:"vs_naive_case"`
+	VsMedianCase float64 `json:"vs_median_case"`
 }
 
-// ScheduleResponse represents the output from the /api/schedule endpoint
+// ScheduleResponse represents the output from the /v0/schedule endpoint
 type ScheduleResponse struct {
 	Ideal         ScheduleOption   `json:"ideal"`
 	Options       []ScheduleOption `json:"options"`
-	WorstCase     ScheduleOption   `json:"worstCase"`
-	NaiveCase     ScheduleOption   `json:"naiveCase"`
-	MedianCase    ScheduleOption   `json:"medianCase"`
-	CarbonSavings CarbonSavings    `json:"carbonSavings"`
+	WorstCase     ScheduleOption   `json:"worst_case"`
+	NaiveCase     ScheduleOption   `json:"naive_case"`
+	MedianCase    ScheduleOption   `json:"median_case"`
+	CarbonSavings CarbonSavings    `json:"carbon_savings"`
 }
 
 // NewSchedulingClient creates a new client for the carbon-aware scheduling API
@@ -76,14 +105,21 @@ func (c *SchedulingClient) GetOptimalSchedule(ctx context.Context, startTime tim
 		End:   startTime.Add(maxDelay),
 	}
 
-	// Format the duration as a string (e.g., "1h30m")
-	durationStr := jobDuration.String()
+	// Format the duration as an ISO 8601 string (e.g., "PT1H30M")
+	durationStr := toISO8601Duration(jobDuration)
+
+	// Parse the location string (format: "provider:region")
+	parts := strings.Split(location, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid location format: %s, expected 'provider:region'", location)
+	}
+	provider, region := parts[0], parts[1]
 
 	// Create the request payload
 	req := ScheduleRequest{
 		Windows:  []TimeRange{window},
 		Duration: durationStr,
-		Zones:    []string{location},
+		Zones:    []CloudZone{{Provider: provider, Region: region}},
 	}
 
 	// Convert the request to JSON
@@ -91,12 +127,13 @@ func (c *SchedulingClient) GetOptimalSchedule(ctx context.Context, startTime tim
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
+	fmt.Printf("[DEBUG] ScheduleRequest payload: %s\n", string(reqBody))
 
 	// Create the HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%s/api/schedule", c.BaseURL),
+		fmt.Sprintf("%s/v0/schedule/", c.BaseURL),
 		bytes.NewBuffer(reqBody),
 	)
 	if err != nil {

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"strings"
 	"time"
 )
 
@@ -22,25 +23,42 @@ func (m *MockSchedulingClient) GetOptimalSchedule(ctx context.Context, startTime
 	
 	// Default implementation if no mock function is provided
 	now := time.Now()
+	
+	// Parse the location string (format: "provider:region")
+	var zone CloudZone
+	parts := strings.Split(location, ":")
+	if len(parts) == 2 {
+		zone = CloudZone{
+			Provider: parts[0],
+			Region:   parts[1],
+		}
+	} else {
+		// Default to aws:us-east-1 if invalid format
+		zone = CloudZone{
+			Provider: "aws",
+			Region:   "us-east-1",
+		}
+	}
+	
 	return &ScheduleResponse{
 		Ideal: ScheduleOption{
 			Time:         now.Add(1 * time.Hour),
-			Zone:         location,
+			Zone:         zone,
 			CO2Intensity: 400.0,
 		},
 		WorstCase: ScheduleOption{
 			Time:         now.Add(2 * time.Hour),
-			Zone:         location,
+			Zone:         zone,
 			CO2Intensity: 700.0,
 		},
 		NaiveCase: ScheduleOption{
 			Time:         now,
-			Zone:         location,
+			Zone:         zone,
 			CO2Intensity: 600.0,
 		},
 		MedianCase: ScheduleOption{
 			Time:         now.Add(30 * time.Minute),
-			Zone:         location,
+			Zone:         zone,
 			CO2Intensity: 550.0,
 		},
 		CarbonSavings: CarbonSavings{

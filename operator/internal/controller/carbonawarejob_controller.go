@@ -212,8 +212,8 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		jobDuration = carbonAwareJob.Spec.MaxDuration.Duration
 	}
 
-	// Default location to "gcp:us-west2" if not specified
-	location := "gcp:us-west2"
+	// Default location to "aws:us-east-1" if not specified
+	location := "aws:us-east-1"
 	if carbonAwareJob.Spec.Location != "" {
 		location = carbonAwareJob.Spec.Location
 	}
@@ -255,6 +255,9 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		optimalTime := metav1.NewTime(scheduleResp.Ideal.Time)
 		worstCaseTime := metav1.NewTime(scheduleResp.WorstCase.Time)
 
+		// Format zone information
+		optimalZone := fmt.Sprintf("%s:%s", scheduleResp.Ideal.Zone.Provider, scheduleResp.Ideal.Zone.Region)
+		
 		// Update the scheduling decision
 		carbonAwareJob.Status.SchedulingDecision = &batchv1alpha1.SchedulingDecision{
 			OptimalTime:        &optimalTime,
@@ -263,7 +266,7 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 			WorstCaseIntensity: fmt.Sprintf("%.2f gCO2eq/kWh", scheduleResp.WorstCase.CO2Intensity),
 			ImmediateIntensity: fmt.Sprintf("%.2f gCO2eq/kWh", scheduleResp.NaiveCase.CO2Intensity),
 			ForecastSource:     "carbon-aware-scheduler-api",
-			DecisionReason:     "Optimal time determined based on carbon intensity forecast",
+			DecisionReason:     fmt.Sprintf("Optimal time determined for %s based on carbon intensity forecast", optimalZone),
 		}
 
 		// Set the scheduled time

@@ -126,8 +126,8 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 				return
 			}
 
-			// Only respond to /api/schedule
-			if r.URL.Path == "/api/schedule" {
+			// Only respond to /v0/schedule
+			if r.URL.Path == "/v0/schedule" {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(mockResponse)

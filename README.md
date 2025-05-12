@@ -10,28 +10,13 @@ Currently, this project is in alpha and only supports a single custom resource: 
 ### Prerequisites
 
 1. A Kubernetes cluster
-2. A [WattTime API key](https://docs.watttime.org/)
 
 ### Helm Install (development)
 
-First, create a namespace for the operator:
-```bash
-kubectl create namespace carbon-aware-kube
-```
-
-Next, create a secret for the WattTime API key:
-```bash
-kubectl create secret generic carbon-aware-watttime --from-literal=username=$WATTIME_USER --from-literal=password=$WATTIME_PASSWORD -n carbon-aware-kube
-```
-
-Next, install the operator:
 The following command will install the operator in development mode, which will use the `dev` tag for both the operator and scheduler images:
 ```bash
-helm upgrade --install carbon-aware-kube operator/helm/carbon-aware-kube -n carbon-aware-kube \
-  --set image.tag=dev \
-  --set carbon-aware-scheduler.image.tag=dev \
-  --set carbon-aware-scheduler.watttime.existingSecret.enabled=true \
-  --set carbon-aware-scheduler.watttime.existingSecret.name=carbon-aware-watttime
+helm repo add carbon-aware https://carbon-aware.github.io/charts
+helm upgrade --install carbon-aware-kube helm/carbon-aware-kube -n carbon-aware-kube --create-namespace
 ```
 
 ## Usage

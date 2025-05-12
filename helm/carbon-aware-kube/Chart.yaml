@@ -1,0 +1,13 @@
+apiVersion: v2
+name: carbon-aware-kube
+description: A Helm chart for the Carbon Aware Kubernetes Operator
+type: application
+version: 0.1.6
+appVersion: "0.1.6"
+
+# Dependencies
+dependencies:
+  - name: scheduler
+    version: "0.1.7"
+    repository: https://carbon-aware.github.io/charts
+    condition: localSchedulerEnabled

@@ -1,0 +1,45 @@
+# Default values for carbon-aware-kube operator
+
+# Operator image configuration
+image:
+  repository: ghcr.io/carbon-aware/operator
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Deployment configuration
+replicaCount: 1
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: "controller-manager"
+
+# Node selector for the deployment
+nodeSelector: {}
+
+# Tolerations for the deployment
+tolerations: []
+
+# Affinity for the deployment
+affinity: {}
+
+# If localSchedulerEnabled is true, the operator will install the scheduler chart
+# If localSchedulerEnabled is false, the operator will use the schedulerExternalUrl
+localSchedulerEnabled: false
+schedulerExternalUrl: "https://scheduler.carbonaware.dev"
+# Scheduler configuration
+# See the scheduler chart for more configuration options -- https://github.com/carbon-aware/scheduler
+scheduler: {}
