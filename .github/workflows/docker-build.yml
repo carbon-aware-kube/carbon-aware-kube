@@ -1,17 +1,17 @@
-name: Build and Push Operator Docker Image
+name: Build and Push scheduler Docker Image
 
 on:
-  release:
-    types: [published]
   push:
+    tags:
+      - "v*.*.*"
     branches: [main, master]
     paths:
       - 'operator/**'
-      - '.github/workflows/operator-build-push.yml'
+      - '.github/workflows/docker-build.yml'
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: carbon-aware-kube/operator
+  IMAGE_NAME: carbon-aware/operator
 
 jobs:
   build-and-push:
@@ -47,20 +47,20 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
-            type=raw,value=dev,enable=${{ github.event_name == 'push' }}
-            type=sha,format=short,enable=${{ github.event_name == 'push' }}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=dev,enable=${{ github.ref_type == 'branch' }}
+            type=sha,format=short,enable=${{ github.ref_type == 'branch' }}
 
       # Set image tag based on event type
       - name: Set image tag
         id: set-tag
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
             # For releases, use the tag without the 'v' prefix
-            TAG="${{ github.event.release.tag_name }}"
+            TAG="${{ github.ref }}"
             TAG="${TAG#v}"
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
+          elif [[ "${{ github.ref_type }}" == "branch" ]]; then
             # For pushes to main/master, use 'dev' plus short commit SHA
             TAG="dev-$(git rev-parse --short HEAD)"
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
@@ -70,7 +70,7 @@ jobs:
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
           fi
           echo "Using tag: ${TAG}"
-      
+
       # Build and push using Docker action
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

@@ -1,0 +1,36 @@
+name: Package and release Helm chart
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  package:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package Helm chart
+        run: |
+          helm lint helm/carbon-aware-kube
+          helm package helm/carbon-aware-kube --destination dist
+
+      - name: Upload .tgz to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CARBON_AWARE_CHARTS_PAT }}
+          repository: carbon-aware/charts
+          event-type: chart-released
