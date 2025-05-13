@@ -460,14 +460,33 @@ func (r *CarbonAwareJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 	r.SchedulingClient = schedulingclient.NewSchedulingClient(schedulerURL)
 
-	// Run introspection
-	env, err := cloudinfo.DetectCloudEnvironment(ctx, r.Client)
-	if err != nil {
-		ctrl.Log.Error(err, "failed to detect cloud environment")
+	// Check if cloud environment override is enabled
+	if os.Getenv("CLOUD_ENVIRONMENT_OVERRIDE") == "true" {
+		provider := os.Getenv("CLOUD_PROVIDER")
+		region := os.Getenv("CLOUD_REGION")
+		
+		ctrl.Log.Info("Using override cloud environment", "provider", provider, "region", region)
+		r.CloudEnvironment = &cloudinfo.CloudEnvironment{
+			Provider: provider,
+			Region:   region,
+		}
 	} else {
-		ctrl.Log.Info("Detected cloud environment", "provider", env.Provider, "region", env.Region, "zone", env.Zone)
+		// Run introspection to auto-detect cloud environment
+		ctrl.Log.Info("Attempting to auto-detect cloud environment")
+		env, err := cloudinfo.DetectCloudEnvironment(ctx, r.Client)
+		if err != nil {
+			ctrl.Log.Error(err, "failed to detect cloud environment")
+			// Set default values if detection fails
+			r.CloudEnvironment = &cloudinfo.CloudEnvironment{
+				Provider: "aws",
+				Region:   "us-east-1",
+			}
+			ctrl.Log.Info("Using default cloud environment", "provider", r.CloudEnvironment.Provider, "region", r.CloudEnvironment.Region)
+		} else {
+			ctrl.Log.Info("Detected cloud environment", "provider", env.Provider, "region", env.Region)
+			r.CloudEnvironment = env
+		}
 	}
-	r.CloudEnvironment = env
 
 
 	return ctrl.NewControllerManagedBy(mgr).

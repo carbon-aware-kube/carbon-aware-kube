@@ -30,6 +30,14 @@ spec:
         env:
         - name: CARBON_AWARE_SCHEDULER_URL
           value: {{ include "carbon-aware-kube.schedulerUrl" . }}
+        {{- if .Values.cloudEnvironment.override }}
+        - name: CLOUD_ENVIRONMENT_OVERRIDE
+          value: "true"
+        - name: CLOUD_PROVIDER
+          value: {{ .Values.cloudEnvironment.provider | quote }}
+        - name: CLOUD_REGION
+          value: {{ .Values.cloudEnvironment.region | quote }}
+        {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         securityContext:

@@ -43,3 +43,14 @@ schedulerExternalUrl: "https://scheduler.carbonaware.dev"
 # Scheduler configuration
 # See the scheduler chart for more configuration options -- https://github.com/carbon-aware/scheduler
 scheduler: {}
+
+# Cloud environment configuration
+# By default, the operator will attempt to auto-detect the cloud environment
+# Set overrideCloudEnvironment to true to use the values below instead of auto-detection
+cloudEnvironment:
+  # Set to true to override automatic cloud environment detection
+  override: false
+  # Cloud provider (aws, gcp, azure, etc.)
+  provider: "aws"
+  # Cloud region (us-east-1, us-west-2, etc.)
+  region: "us-east-1"
