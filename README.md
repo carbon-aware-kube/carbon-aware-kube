@@ -24,7 +24,7 @@ helm upgrade --install carbon-aware-kube helm/carbon-aware-kube -n carbon-aware-
 To create a `CarbonAwareJob`, you can do the following:
 ```bash
 kubectl apply -f - <<EOF
-apiVersion: batch.carbon-aware-kube.dev/v1alpha1
+apiVersion: batch.carbonaware.dev/v1alpha1
 kind: CarbonAwareJob
 metadata:
   name: example

@@ -8,7 +8,7 @@ metadata:
   name: carbonawarejob-viewer-role
 rules:
 - apiGroups:
-  - batch.carbon-aware-kube.dev
+  - batch.carbonaware.dev
   resources:
   - carbonawarejobs
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - batch.carbon-aware-kube.dev
+  - batch.carbonaware.dev
   resources:
   - carbonawarejobs/status
   verbs:

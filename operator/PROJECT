@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: carbon-aware-kube.dev
+domain: carbonaware.dev
 layout:
 - go.kubebuilder.io/v4
 plugins:
@@ -15,7 +15,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: carbon-aware-kube.dev
+  domain: carbonaware.dev
   group: batch
   kind: CarbonAwareJob
   path: github.com/carbon-aware-kube/operator/api/v1alpha1

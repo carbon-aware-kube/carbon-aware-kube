@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	batchv1alpha1 "github.com/carbon-aware-kube/operator/api/v1alpha1"
+	cloudinfo "github.com/carbon-aware-kube/operator/internal/introspection"
 	schedulingclient "github.com/carbon-aware-kube/operator/internal/client"
 )
 
@@ -59,7 +60,7 @@ const (
 	SchedulingStateFailed SchedulingState = "Failed"
 
 	// CarbonAwareJobFinalizer is the finalizer name for CarbonAwareJob resources
-	CarbonAwareJobFinalizer = "batch.carbon-aware-kube.dev/finalizer"
+	CarbonAwareJobFinalizer = "batch.carbonaware.dev/finalizer"
 )
 
 // CarbonAwareJobReconciler reconciles a CarbonAwareJob object
@@ -68,12 +69,15 @@ type CarbonAwareJobReconciler struct {
 	Scheme *runtime.Scheme
 	// SchedulingClient is a client for fetching carbon intensity forecasts
 	SchedulingClient schedulingclient.SchedulingClientInterface
+	// CloudEnvironment is the cloud environment detected by introspection
+	CloudEnvironment *cloudinfo.CloudEnvironment
 }
 
-// +kubebuilder:rbac:groups=batch.carbon-aware-kube.dev,resources=carbonawarejobs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=batch.carbon-aware-kube.dev,resources=carbonawarejobs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=batch.carbon-aware-kube.dev,resources=carbonawarejobs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch.carbon-aware.dev,resources=carbonawarejobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch.carbon-aware.dev,resources=carbonawarejobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch.carbon-aware.dev,resources=carbonawarejobs/finalizers,verbs=update
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=nodes,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -212,10 +216,18 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		jobDuration = carbonAwareJob.Spec.MaxDuration.Duration
 	}
 
-	// Default location to "aws:us-east-1" if not specified
-	location := "aws:us-east-1"
-	if carbonAwareJob.Spec.Location != "" {
-		location = carbonAwareJob.Spec.Location
+	// Default cloud environment to AWS:us-east-1 if not specified
+	cloudZone := schedulingclient.CloudZone{
+		Provider: "aws",
+		Region:   "us-east-1",
+	}
+	if r.CloudEnvironment != nil {
+		cloudZone = schedulingclient.CloudZone{
+			Provider: r.CloudEnvironment.Provider,
+			Region:   r.CloudEnvironment.Region,
+		}
+	} else {
+		logger.Error(nil, "CloudEnvironment not initialized. Defaulting to AWS:us-east-1")
 	}
 
 	// Get the optimal schedule from the scheduling API
@@ -224,7 +236,7 @@ func (r *CarbonAwareJobReconciler) handleNewJob(ctx context.Context, carbonAware
 		submissionTime,
 		maxDelay,
 		jobDuration,
-		location,
+		cloudZone,
 	)
 
 	if err != nil {
@@ -412,11 +424,11 @@ func (r *CarbonAwareJobReconciler) constructJobFromTemplate(carbonAwareJob *batc
 				"app.kubernetes.io/managed-by": "carbon-aware-operator",
 			},
 			Annotations: map[string]string{
-				"carbon-aware-kube.dev/carbon-intensity":     carbonAwareJob.Status.CarbonIntensity,
-				"carbon-aware-kube.dev/scheduled-time":       carbonAwareJob.Status.ScheduledTime.Format(time.RFC3339),
-				"carbon-aware-kube.dev/carbon-savings-pct":   carbonAwareJob.Status.CarbonSavings.VsNaiveCase,
-				"carbon-aware-kube.dev/parent-resource-name": carbonAwareJob.Name,
-				"carbon-aware-kube.dev/parent-resource-uid":  string(carbonAwareJob.UID),
+				"carbonaware.dev/carbon-intensity":     carbonAwareJob.Status.CarbonIntensity,
+				"carbonaware.dev/scheduled-time":       carbonAwareJob.Status.ScheduledTime.Format(time.RFC3339),
+				"carbonaware.dev/carbon-savings-pct":   carbonAwareJob.Status.CarbonSavings.VsNaiveCase,
+				"carbonaware.dev/parent-resource-name": carbonAwareJob.Name,
+				"carbonaware.dev/parent-resource-uid":  string(carbonAwareJob.UID),
 			},
 		},
 		Spec: carbonAwareJob.Spec.Template.Spec,
@@ -440,12 +452,23 @@ func (r *CarbonAwareJobReconciler) constructJobFromTemplate(carbonAwareJob *batc
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CarbonAwareJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	ctx := context.Background()
 	// Initialize the scheduling client
 	schedulerURL := os.Getenv("CARBON_AWARE_SCHEDULER_URL")
 	if schedulerURL == "" {
 		schedulerURL = "http://carbon-aware-scheduler:8080" // Default URL if not specified
 	}
 	r.SchedulingClient = schedulingclient.NewSchedulingClient(schedulerURL)
+
+	// Run introspection
+	env, err := cloudinfo.DetectCloudEnvironment(ctx, r.Client)
+	if err != nil {
+		ctrl.Log.Error(err, "failed to detect cloud environment")
+	} else {
+		ctrl.Log.Info("Detected cloud environment", "provider", env.Provider, "region", env.Region, "zone", env.Zone)
+	}
+	r.CloudEnvironment = env
+
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1alpha1.CarbonAwareJob{}).

@@ -1,4 +1,4 @@
-apiVersion: batch.carbon-aware-kube.dev/v1alpha1
+apiVersion: batch.carbonaware.dev/v1alpha1
 kind: CarbonAwareJob
 metadata:
   labels:

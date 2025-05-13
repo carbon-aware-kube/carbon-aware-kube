@@ -2,21 +2,20 @@ package client
 
 import (
 	"context"
-	"strings"
 	"time"
 )
 
 // MockSchedulingClient is a mock implementation of the scheduling client for testing
 type MockSchedulingClient struct {
 	// MockGetOptimalSchedule is a function that will be called by GetOptimalSchedule
-	MockGetOptimalSchedule func(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location string) (*ScheduleResponse, error)
+	MockGetOptimalSchedule func(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location CloudZone) (*ScheduleResponse, error)
 }
 
 // Ensure MockSchedulingClient implements SchedulingClientInterface
 var _ SchedulingClientInterface = (*MockSchedulingClient)(nil)
 
 // GetOptimalSchedule calls the mock function
-func (m *MockSchedulingClient) GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location string) (*ScheduleResponse, error) {
+func (m *MockSchedulingClient) GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location CloudZone) (*ScheduleResponse, error) {
 	if m.MockGetOptimalSchedule != nil {
 		return m.MockGetOptimalSchedule(ctx, startTime, maxDelay, jobDuration, location)
 	}
@@ -26,18 +25,9 @@ func (m *MockSchedulingClient) GetOptimalSchedule(ctx context.Context, startTime
 	
 	// Parse the location string (format: "provider:region")
 	var zone CloudZone
-	parts := strings.Split(location, ":")
-	if len(parts) == 2 {
-		zone = CloudZone{
-			Provider: parts[0],
-			Region:   parts[1],
-		}
-	} else {
-		// Default to aws:us-east-1 if invalid format
-		zone = CloudZone{
-			Provider: "aws",
-			Region:   "us-east-1",
-		}
+	zone = CloudZone{
+		Provider: location.Provider,
+		Region:   location.Region,
 	}
 	
 	return &ScheduleResponse{

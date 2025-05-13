@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -34,7 +33,7 @@ func toISO8601Duration(d time.Duration) string {
 
 // SchedulingClientInterface defines the interface for the carbon-aware scheduling client
 type SchedulingClientInterface interface {
-	GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location string) (*ScheduleResponse, error)
+	GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location CloudZone) (*ScheduleResponse, error)
 }
 
 // SchedulingClient is a client for the carbon-aware scheduling API
@@ -98,7 +97,7 @@ func NewSchedulingClient(baseURL string) SchedulingClientInterface {
 }
 
 // GetOptimalSchedule calculates the optimal schedule for a job based on carbon intensity forecasts
-func (c *SchedulingClient) GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location string) (*ScheduleResponse, error) {
+func (c *SchedulingClient) GetOptimalSchedule(ctx context.Context, startTime time.Time, maxDelay time.Duration, jobDuration time.Duration, location CloudZone) (*ScheduleResponse, error) {
 	// Create the scheduling window from start time to start time + max delay
 	window := TimeRange{
 		Start: startTime,
@@ -108,18 +107,11 @@ func (c *SchedulingClient) GetOptimalSchedule(ctx context.Context, startTime tim
 	// Format the duration as an ISO 8601 string (e.g., "PT1H30M")
 	durationStr := toISO8601Duration(jobDuration)
 
-	// Parse the location string (format: "provider:region")
-	parts := strings.Split(location, ":")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid location format: %s, expected 'provider:region'", location)
-	}
-	provider, region := parts[0], parts[1]
-
 	// Create the request payload
 	req := ScheduleRequest{
 		Windows:  []TimeRange{window},
 		Duration: durationStr,
-		Zones:    []CloudZone{{Provider: provider, Region: region}},
+		Zones:    []CloudZone{{Provider: location.Provider, Region: location.Region}},
 	}
 
 	// Convert the request to JSON

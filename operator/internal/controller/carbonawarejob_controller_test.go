@@ -476,8 +476,8 @@ var _ = Describe("CarbonAwareJob Controller", func() {
 					return false
 				}
 
-				_, hasIntensity := job.Annotations["carbon-aware-kube.dev/carbon-intensity"]
-				_, hasSavings := job.Annotations["carbon-aware-kube.dev/carbon-savings-pct"]
+				_, hasIntensity := job.Annotations["carbonaware.dev/carbon-intensity"]
+				_, hasSavings := job.Annotations["carbonaware.dev/carbon-savings-pct"]
 
 				return hasIntensity && hasSavings
 			}, time.Second*10, time.Millisecond*250).Should(BeTrue())

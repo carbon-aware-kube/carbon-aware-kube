@@ -41,12 +41,6 @@ type CarbonAwareJobSpec struct {
 	// This is used to calculate the optimal start time to minimize carbon emissions
 	// +optional
 	MaxDuration *metav1.Duration `json:"maxDuration,omitempty"`
-
-	// Location specifies the geographical location where the job will run
-	// This is used to determine the carbon intensity for that region
-	// If not specified, the controller will use the location of the Kubernetes cluster
-	// +optional
-	Location string `json:"location,omitempty"`
 }
 
 // JobTemplateSpec is a subset of the Kubernetes batch/v1.JobTemplateSpec

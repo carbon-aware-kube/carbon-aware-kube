@@ -21,7 +21,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - batch.carbon-aware-kube.dev
+  - batch.carbonaware.dev
   resources:
   - carbonawarejobs
   verbs:
@@ -33,17 +33,25 @@ rules:
   - update
   - watch
 - apiGroups:
-  - batch.carbon-aware-kube.dev
+  - batch.carbonaware.dev
   resources:
   - carbonawarejobs/finalizers
   verbs:
   - update
 - apiGroups:
-  - batch.carbon-aware-kube.dev
+  - batch.carbonaware.dev
   resources:
   - carbonawarejobs/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
 {{- end }}

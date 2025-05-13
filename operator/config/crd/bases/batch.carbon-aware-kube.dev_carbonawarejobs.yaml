@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: carbonawarejobs.batch.carbon-aware-kube.dev
+  name: carbonawarejobs.batch.carbonaware.dev
 spec:
-  group: batch.carbon-aware-kube.dev
+  group: batch.carbonaware.dev
   names:
     kind: CarbonAwareJob
     listKind: CarbonAwareJobList
@@ -58,12 +58,6 @@ spec:
           spec:
             description: CarbonAwareJobSpec defines the desired state of CarbonAwareJob
             properties:
-              location:
-                description: |-
-                  Location specifies the geographical location where the job will run
-                  This is used to determine the carbon intensity for that region
-                  If not specified, the controller will use the location of the Kubernetes cluster
-                type: string
               maxDelay:
                 description: |-
                   MaxDelay defines the maximum time to delay the job execution from submission time
