@@ -2,8 +2,8 @@ apiVersion: v2
 name: carbon-aware-kube
 description: A Helm chart for the Carbon Aware Kubernetes Operator
 type: application
-version: 0.1.7
-appVersion: "0.1.7"
+version: 0.1.8
+appVersion: "0.1.8"
 
 # Dependencies
 dependencies:
