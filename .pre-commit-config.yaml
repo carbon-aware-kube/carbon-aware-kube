@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v1.4.0
+    hooks:
+      - id: go-fmt
+      - id: go-imports
+      - id: go-vet
+      - id: go-test
+        args: ['-short']
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.55.2  # Match version used in CI
+    hooks:
+      - id: golangci-lint
+        args: [--config=.golangci.yml]

@@ -1,0 +1,40 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - errcheck
+    - deadcode
+    - structcheck
+    - unused
+    - typecheck
+    - gofmt
+    - goimports
+
+  disable:
+    - dupl     # disables complaints about duplicated code (can be noisy)
+    - gocyclo  # disables function complexity warnings (can be subjective)
+
+linters-settings:
+  gofmt:
+    simplify: true
+
+  goimports:
+    local-prefixes: github.com/carbon-aware/carbon-aware-kube
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - "should have comment" # ignore missing comments
+
+output:
+  format: colored-line-number
+  sort-results: true
+
